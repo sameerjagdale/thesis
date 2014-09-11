@@ -110,3 +110,5 @@ sympy-plots-for-*.tex/
 #swap files
 *.swp
 *~
+#svn files
+.svn/*

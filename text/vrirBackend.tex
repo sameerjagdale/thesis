@@ -1,3 +1,4 @@
+An important contribution of the thesis is the static generation of C++ code from VRIR. As described in \chapref{chap: Background}, VRIR is a high level strongly typed AST designed to support easy compilation of a wide range of Array based languages and hence supports different indexing schemes such as 0-indexing and 1-indexing and negative indexing and different array layout schemes like row-major and column-major  among others. C++ on the other hand does not have an in-built support for arrays, and only supports 0-indexing and a row major layout. This chapter describes in detail the challenges of compiling from VRIR to C++ and  how different nodes in VRIR are mapped to C++ constructs including those which C++ does not implicitly support.
 \section{Advantages of partial compilation over complete compilation}
 \section{Challenges}
 \section{Mapping types}

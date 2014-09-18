@@ -1,10 +1,14 @@
-An important contribution of the thesis is the static generation of C++ code from VRIR. As described in \chapref{chap: Background}, VRIR is a high level strongly typed AST designed to support easy compilation of a wide range of Array based languages and hence supports different indexing schemes such as 0-indexing and 1-indexing and negative indexing and different array layout schemes like row-major and column-major  among others. C++ on the other hand does not have an in-built support for arrays, and only supports 0-indexing and a row major layout. This chapter describes in detail the challenges of compiling from VRIR to C++ and  how different nodes in VRIR are mapped to C++ constructs including those which C++ does not implicitly support.
+An important contribution of the thesis is the static generation of C++ code from VRIR. As described in \chapref{chap:Background}, VRIR is a high level strongly typed AST designed to support easy compilation of a wide range of Array based languages and hence supports different indexing schemes such as 0-indexing and 1-indexing and negative indexing and different array layout schemes like row-major and column-major  among others. C++ on the other hand does not have an in-built support for arrays, and only supports 0-indexing and a row major layout. This chapter describes in detail the challenges of compiling from VRIR to C++ and  how different nodes in VRIR are mapped to C++ constructs including those which C++ does not implicitly support.
 %\section{Advantages of partial compilation over complete compilation}
 \section{Challenges}
-This section lists the various challenges in compiling from VRIR to C++.
-\subsection{Arrays}
-\subsection{Multiple returns}
+VRIR supports arrays with supports different types of indexing schemes like 0,1 and negative indexing. It also supports different array layouts like column major, row major and stride major. On the other hand, C++ only supports 0-indexed row major arrays. Hence the code generator has to be able to generate map all the different variations to the format that C++ supports.\\ % examples
+VRIR also supports functions which return multiple values. These values can have different types and shapes. C++ only allows returning a single scalar, structure or a pointer to a memory location. The code generator should be capable of handling this kind of mapping. \\
 \section{Mapping types}
+\subsection{VRIR types}
+Types in VRIR can be categorised into 5 types :
+\subsection{Scalar type}
+The scalar type is used define the primitive data type.
+Different types of Scalar values are 
 \section{Operators}
 \section{VrArrays}
 \section{Statements}

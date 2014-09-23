@@ -15,7 +15,10 @@ existing \mclab and Velociraptor tools we use}\label{Fig:Overview}
 \end{center}
 \end{figure}
 \section{The Execution Model} 
-
+The Execution model, shown in figure \ref{Fig:working}, describes how program execution occurs before and after statically compiling some of the methods in the program to C++ using \velocty. The user selects a function which he/she identifies as computationally intensive. \velocty generates a callgraph using the user-specified function as an entry point. In figure \ref{Fig:working} the coreFunction1 is specified as the entry point and the  generated callgraph contains coreFunction1 and coreFunction2. Both these functions are compiled by \velocty to C++.\\
+The generated C++ code contains calls to functions in a language-specific library. The library contains functions which mirror the builtins in the source language. These functions are also written in C++ but are language-specific because the behaviour of the functions are dependent on the source language.\\ 
+\velocty also generates glue code to interface with the source program. The Mex\cite{mex} API and the Python\cite{python} C API are used for interfacing with \matlab and Python\cite{python} respectively.\\
+The generated code is compiled with the runtime and the glue code and packaged as a shared library. All calls to the entry point function, in this case, coreFunction1, would be directed to the shared library instead of the original source language version.\\
 \begin{figure}[htbp]
 \begin{center}
 \includegraphics[scale=0.4]{Figures/WorkingDetails.png}
@@ -29,7 +32,7 @@ The main contributions of this thesis are as follows.
 \item Implementation of a transformation from  Colon expressions to Range expressions
 \item Generating glue code necessary for invoking C++ functions from \matlab\cite{matlab}.
 \item Generating C++ code from the Velociraptor IR.
-\item Optimizing generated code by elminating bounds checks unncessary memory allocations. 
+\item Optimizing generated code by elminating bounds checks and removing unncessary memory allocations. 
 \end{itemize}
 \section{Thesis Outline}
 This thesis is divided into \ref{chap:Conclusions} chapters, including this one, which are structured as follows.

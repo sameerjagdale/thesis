@@ -10,7 +10,7 @@
 \usepackage[french]{babel}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-
+\usepackage{array}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{placeins}
@@ -160,7 +160,9 @@
   \hyphenchar\font=`\-% allowing hyphenation
 }
 \newcommand{\velocty}{{Velo\textbf{C}ty}\xspace}
-
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
 % Tell LaTeX to not "bottom justify" text. This prevents ugly
 % spaces between paragraphs in columns when LaTeX stretches them.
 \raggedbottom

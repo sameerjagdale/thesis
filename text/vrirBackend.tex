@@ -1,10 +1,26 @@
-An important contribution of the thesis is the static generation of C++ code from VRIR. Due to differences in the semantics of VRIR and C++, we faced various challenges during code generation. As described in \chapref{chap:Background}, VRIR is a high level strongly typed AST designed to support easy compilation of a wide range of Array based languages. Hence, it supports different indexing schemes such as 0-indexing, 1-indexing and negative indexing as well as different array layout schemes such as row-major and column-major. C++ on the other hand does not have an in-built support for arrays, and only supports 0-indexing and a row major layout. Moreover, VRIR also supports multiple returns. On the other hand, we can only return a single value, which can be a scalar, class, struct or a pointer, in C++. This chapter describes in detail the challenges of compiling from VRIR to C++ and  how different nodes in VRIR are mapped to C++ constructs including those which C++ does not implicitly support.
+An important contribution of the thesis is the static generation of C++ code from VRIR. Due to differences in the semantics of VRIR and C++, we faced various challenges during code generation. As described in \chapref{chap:Background}, VRIR is a high level strongly typed AST designed to support easy compilation of a wide range of Array based languages. Hence, it supports different indexing schemes such as 0-indexing, 1-indexing and negative indexing as well as different array layout schemes such as row-major and column-major. C++ on the other hand does not have an in-built support for arrays, and only supports 0-indexing and a row major layout. Moreover, VRIR also supports multiple returns. On the other hand, we can only return a single value, which can be a scalar, class, struct or a pointer, in C++. This chapter describes how different nodes in VRIR are mapped to C++ constructs including those which C++ does not implicitly support.
 \section{Mapping types}
 \subsection{VRIR types}
-Types in VRIR can be categorised into 5 types :
+Data types in VRIR, known as VTypes, can be categorised into 5 types :
 \subsection{Scalar type}
 The scalar type is used define the primitive data type.
-Different types of Scalar values are 
+Different types of Scalar values are Int32, Int64, Float32, Float64 and Bool.
+The mapping of VTypes to different C++ types is shown in table \ref{tab:typeMap}.
+\begin{table}[h]
+\centering
+\begin{tabular}{|C{3cm}|C{3cm}|}
+\hline
+VTypes  & C++ types \\ \hline
+Int32   & int       \\ \hline
+Int64   & long      \\ \hline
+Float32 & float     \\ \hline
+Float64 & double    \\ \hline
+Bool    & bool      \\ \hline
+\end{tabular}
+\caption[VType to C++ type mapping]{VType to C++ type mapping. The tables shows the different C++ types in the column on the right will be mapped to from the VTypes in the right.} 
+\label{tab:typeMap}
+\end{table}
+\subsection{Array Types}
 \section{Operators}
 \section{VrArrays}
 \section{Statements}
@@ -16,4 +32,3 @@ Different types of Scalar values are
 \section{Advanced indexing}
 \subsection{VrIndex}
 \subsection{Array Slicing}
-

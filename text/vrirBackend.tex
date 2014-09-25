@@ -8,19 +8,31 @@ Different types of Scalar values are Int32, Int64, Float32, Float64 and Bool.
 The mapping of VTypes to different C++ types is shown in table \ref{tab:typeMap}.
 \begin{table}[h]
 \centering
-\begin{tabular}{|C{3cm}|C{3cm}|}
+\begin{tabular}{|c|c|c|c|}
 \hline
-VTypes  & C++ types \\ \hline
-Int32   & int       \\ \hline
-Int64   & long      \\ \hline
-Float32 & float     \\ \hline
-Float64 & double    \\ \hline
-Bool    & bool      \\ \hline
+\multicolumn{2}{|c|}{ScalarType}                                                                 & \multirow{2}{*}{Complexity}  & \multirow{2}{*}{C++ types} \\ \cline{1-2}
+Name                                         & S-Expression                                      &                              &                            \\ \hline
+\multirow{2}{*}{Float32}                     & \multicolumn{1}{c|}{\multirow{2}{*}{( float32 )}} & REAL                         & float                        \\ \cline{3-4} 
+                                             & \multicolumn{1}{c|}{}                             & \multicolumn{1}{c|}{COMPLEX} & float complex              \\ \hline
+\multirow{2}{*}{Float64}                     & \multicolumn{1}{c|}{\multirow{2}{*}{( float64 )}} & REAL                         & double                       \\ \cline{3-4} 
+                                             & \multicolumn{1}{c|}{}                             & \multicolumn{1}{c|}{COMPLEX} & double complex             \\ \hline
+\multicolumn{1}{|c|}{\multirow{2}{*}{Int32}} & \multirow{2}{*}{( int32 )}                        & REAL                         & int                      \\ \cline{3-4} 
+\multicolumn{1}{|c|}{}                       &                                                   & \multicolumn{1}{c|}{COMPLEX} & -                          \\ \hline
+\multicolumn{1}{|c|}{\multirow{2}{*}{Int64}} & \multirow{2}{*}{( int64 )}                        & REAL                         & long                     \\ \cline{3-4} 
+\multicolumn{1}{|c|}{}                       &                                                   & \multicolumn{1}{c|}{COMPLEX} & -                          \\ \hline
 \end{tabular}
-\caption[VType to C++ type mapping]{VType to C++ type mapping. The tables shows the different C++ types in the column on the right will be mapped to from the VTypes in the right.} 
+\caption[VType to C++ type mapping]{VType to C++ type mapping. The tables shows the different C++ will be mapped to from the VTypes.} 
 \label{tab:typeMap}
 \end{table}
 \subsection{Array Types}
+C++ does not implicitly define types for arrays. Hence, we implemented structs for arrays of all the data types supported by VRIR. We call the structs collectively as VrArrays. There are separate VrArrays for and real and complex arrays. The different VrArray types for real arrays are :
+\begin{itemize}
+\item VrArrayF64 represents a float64 array.
+\item VrArrayF32 represents a float32 array.
+\item VrArrayI32 represents a 32 bit integer array.
+\item VrArrayI64 represents a 64 bit integer array.
+\item VrArrayB represents a boolean array.
+\end{itemize}
 \section{Operators}
 \section{VrArrays}
 \section{Statements}

@@ -72,10 +72,58 @@ A Func type and its equivalent function definition is shown in table \ref{tab:fu
 \label{tab:funcTypeMap}
 \end{table}
 \section{Operators}
-Arithemetic operators in VRIR, such as plus, minus, mult, div can only have scalar operands. Hence mapping 
+\label{sec:operators}
+Arithemetic operators in VRIR, such as plus, minus, mult, div can only have scalar operands. Hence generating C++ code these operators in straightforward. They are mapped to the operators internally supported by C++. Thus plus is mapped to the `+' operator in C++, minus is mapped to `-'. The complete list is given in table \ref{tab:opMap}. \\
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+VRIR operators & C++ Operators \\ \hline
+plus           & +             \\ \hline
+minus          & -             \\ \hline
+mult           & *             \\ \hline
+div            & /             \\ \hline
+and            & \&\&           \\ \hline
+or             & ||            \\ \hline
+lt             & \textless     \\ \hline
+leq            & \textless=    \\ \hline
+gt             & \textgreater  \\ \hline
+geq            & \textgreater= \\ \hline
+eq             & ==            \\ \hline
+neq            & !=            \\ \hline
+\end{tabular}
+\caption[opMap]{VRIR operators to C++ operators Mapping. The table shows the C++ operators to which the VRIR operators are mapped.}
+\label{tab:opMap}
+\end{table}
+Operations on arrays, on the other hand, are mapped to the LibCall expression in VRIR. Since C++ does not have internal operators for arrays we implemented function to support these operations on arrays. These functions are housed inside the language-specific runtime library. Where ever possible these functions made calls to BLAS functions for enchanced performance. In case of the \matlab\cite{matlab} runtime, we use the Intel Math Kernel Library\cite{mkl} or MKL implementation of BLAS and in case of Python\cite{python}, we use the openBLAS\cite{openblas} implementation.
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|}
+\hline
+VRIR Lib Call                               & Operand 1 & Operand 2 & C++ function \\ \hline
+\multirow{2}{*}{Matrix Multiplication}      & Array     & Array     & mmult        \\ \cline{2-4} 
+                                            & Array     & Scalar    & scal\_mult   \\ \hline
+\multirow{2}{*}{Elementwise Multiplication} & Array     & Array     & vec\_mult    \\ \cline{2-4} 
+                                            & Array     & Scalar    & scal\_mult   \\ \hline
+\multirow{2}{*}{Matrix Left Division}       & Array     & Array     & mat\_ldiv    \\ \cline{2-4} 
+                                            & Array     & Scalar    & scal\_div    \\ \hline
+\multirow{2}{*}{Matrix Right Division}      & Array     & Array     & mat\_rdiv    \\ \cline{2-4} 
+                                            & Array     & Scalar    & scal\_div    \\ \hline
+\multirow{2}{*}{Elementwise Division}       & Array     & Array     & elem\_div    \\ \cline{2-4} 
+                                            & Array     & Scalar    & scal\_div    \\ \hline
+\multirow{2}{*}{Array Addition}             & Array     & Array     & vec\_add     \\ \cline{2-4} 
+                                            & Array     & Scalar    & scal\_add    \\ \hline
+\multirow{2}{*}{Array Subtraction}          & Array     & Array     & vec\_sub     \\ \cline{2-4} 
+                                            & Array     & Scalar    & scal\_minus  \\ \hline
+Array Copy                                  & Array     & Array     & vec\_copy    \\ \hline
+Matrix Transpose                            & Array     & -         & transpose    \\ \hline
+\end{tabular}
+\caption[arrayOpMap]{The table shows the different C++ functions array operators are mapped to. }
+\label{tab:arrayOpMap}
+\end{table}
 \section{VrArrays}
 \label{sec:vrarray}
-SOmethign or the other
+VrArrays are the structs used to represent arrays in the generated code. 
 \section{Statements}
 \subsection{Assignment statement}
 \subsection{For Statement}

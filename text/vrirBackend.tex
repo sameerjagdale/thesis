@@ -25,14 +25,25 @@ Name                                         & S-Expression                     
 \label{tab:typeMap}
 \end{table}
 \subsection{Array Types}
-C++ does not implicitly define types for arrays. Hence, we implemented structs for arrays of all the data types supported by VRIR. We call the structs collectively as VrArrays. There are separate VrArrays for and real and complex arrays. The different VrArray types for real arrays are :
-\begin{itemize}
-\item VrArrayF64 represents a float64 array.
-\item VrArrayF32 represents a float32 array.
-\item VrArrayI32 represents a 32 bit integer array.
-\item VrArrayI64 represents a 64 bit integer array.
-\item VrArrayB represents a boolean array.
-\end{itemize}
+C++ does not implicitly define types for arrays. Hence, we implemented structs for arrays of all the data types supported by VRIR. We call the structs collectively as VrArrays. There are separate VrArrays for and real and complex arrays. The different VrArray types for real array are shown in \ref{tab:arrayTypeMap}
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|}
+\hline
+\multicolumn{3}{|c|}{Array Type}                                                                                                                                                                                  & \multirow{2}{*}{VrArray}         \\ \cline{1-3}
+Name                                                                       & Complexity & S-expression                                                                                                            &                                  \\ \hline
+\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Float64\\ Array\end{tabular}}   & REAL       & \begin{tabular}[c]{@{}c@{}}( arraytype :ndims :layout \\ ( float64 :ctype complex) )\end{tabular}                       & VrArrayF64                       \\ \cline{2-4} 
+                                                                           & COMPLEX    & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}( arraytype :ndims :layout \\ ( float64 :ctype complex) )\end{tabular}}  & \multicolumn{1}{c|}{VrArrayCF64} \\ \hline
+\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Float32 \\ Array\end{tabular}}  & REAL       & \begin{tabular}[c]{@{}c@{}}( arraytype :ndims \\ :layout \\ ( float32  ctype: real ) )\end{tabular}                     & VrArrayF32                       \\ \cline{2-4} 
+                                                                           & COMPLEX    & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}( arraytype :ndims :layout \\ ( float32,ctype: complex ) )\end{tabular}} & \multicolumn{1}{l|}{VrArrayCF32} \\ \hline
+\begin{tabular}[c]{@{}c@{}}Int32 \\ Array\end{tabular}                     & REAL       & \begin{tabular}[c]{@{}c@{}}( arraytype :ndims :layout \\ ( int32 ctype: real ) )\end{tabular}                           & VrArrayI32                       \\ \hline
+\begin{tabular}[c]{@{}c@{}}Int64 \\ Array\end{tabular}                     & REAL       & \begin{tabular}[c]{@{}c@{}}( arraytype :ndims :layout \\ ( int32 ctype: real ) )\end{tabular}                           & VrArrayI64                       \\ \hline
+\multicolumn{1}{|c|}{\begin{tabular}[c]{@{}l@{}}Bool\\ Array\end{tabular}} & REAL       & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}( arraytype :ndims :layout \\ ( int32 ctype: real ) )\end{tabular}}      & \multicolumn{1}{c|}{VrArrayB}    \\ \hline
+
+\end{tabular}
+\caption[ArrayTypeTable]{ArrayType map. The table shows the VrArray types the ArrayTypes in VRIR are mapped to.}
+\label{tab:arrayTypeMap}
+\end{table}
 \section{Operators}
 \section{VrArrays}
 \section{Statements}

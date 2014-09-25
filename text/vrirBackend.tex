@@ -25,7 +25,7 @@ Name                                         & S-Expression                     
 \label{tab:typeMap}
 \end{table}
 \subsection{Array Types}
-C++ does not implicitly define types for arrays. Hence, we implemented structs for arrays of all the data types supported by VRIR. We call the structs collectively as VrArrays. There are separate VrArrays for and real and complex arrays. The different VrArray types for real array are shown in \ref{tab:arrayTypeMap}
+C++ does not implicitly define types for arrays. Hence, we implemented structs for arrays of all the data types supported by VRIR. We call the structs collectively as VrArrays. There are separate VrArrays for and real and complex arrays. The different VrArray types for real array are shown in table \ref{tab:arrayTypeMap}.
 \begin{table}[h]
 \centering
 \begin{tabular}{|c|c|c|c|}
@@ -44,8 +44,38 @@ Name                                                                       & Com
 \caption[ArrayTypeTable]{ArrayType map. The table shows the VrArray types the ArrayTypes in VRIR are mapped to.}
 \label{tab:arrayTypeMap}
 \end{table}
+More information about the structure of VrArrays can be found in section \ref{sec:vrarray}
+\subsection{Void Type}
+The void type is used in most cases inside a Func Type to convey the absence of either input or output parameters. The void type is mapped to a simple `void' in C++. Table \ref{tab:voidTypeMap} shows the mapping
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+Void Type & Generated Void \\ \hline
+( void)   & void           \\ \hline
+\end{tabular}
+\caption[voidTypeMapping]{The table describes the generated C++ code for a void type.}
+\label{tab:voidTypeMap}
+\end{table}
+\subsection{Tuple Type}
+Tuple types are used to define data structures which can have data of different types. While generating C++ code, the tuple types are used to generate structs that are in turn used to support data structures containing heteregenous data.% Table gives an example of a tuple type and the equivalent C++ struct that is generated.
+\subsection{Func Type}
+Func types are associated with function definitions and function handles. They contain information about the types of the input and out parameters of the function. The function types are for generating function definition.
+A Func type and its equivalent function definition is shown in table \ref{tab:funcTypeMap}
+\begin{table}[h]
+\begin{tabular}{|l|l|}
+\hline
+\multicolumn{1}{|c|}{Func Type}                                                                                                                                                                                                                                       & \multicolumn{1}{c|}{Generated Function}                                                          \\ \hline
+\begin{tabular}[c]{@{}l@{}}(functype\\ (intypes \\ ( arraytype :layout colmajor :ndims 2 \\  (float64 :ctype 0))\\  ( arraytype :layout colmajor :ndims 2 \\ (float64 :ctype 0))) \\ (outtypes \\ ( arraytype :layout colmajor :ndims 2 \\ (float64 :ctype 0))))\end{tabular} & \begin{tabular}[c]{@{}l@{}}VrArrayPtrF64 \\ babai (VrArrayPtrF64 R,VrArrayPtrF64 y)\end{tabular} \\ \hline
+\end{tabular}
+\caption[funcTypeMap]{The table shows an example func type and the equivalent function signature that was generated using the func type.}
+\label{tab:funcTypeMap}
+\end{table}
 \section{Operators}
+Arithemetic operators in VRIR, such as plus, minus, mult, div can only have scalar operands. Hence mapping 
 \section{VrArrays}
+\label{sec:vrarray}
+SOmethign or the other
 \section{Statements}
 \subsection{Assignment statement}
 \subsection{For Statement}

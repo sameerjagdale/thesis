@@ -1,8 +1,8 @@
 An important contribution of the thesis is the static generation of C++ code from VRIR. Due to differences in the semantics of VRIR and C++, we faced various challenges during code generation. As described in \chapref{chap:Background}, VRIR is a high level strongly typed AST designed to support easy compilation of a wide range of Array based languages. Hence, it supports different indexing schemes such as 0-indexing, 1-indexing and negative indexing as well as different array layout schemes such as row-major and column-major. C++ on the other hand does not have an in-built support for arrays, and only supports 0-indexing and a row major layout. Moreover, VRIR also supports multiple returns. On the other hand, we can only return a single value, which can be a scalar, class, struct or a pointer, in C++. This chapter describes how different nodes in VRIR are mapped to C++ constructs including those which C++ does not implicitly support.
-\section{Mapping types}
-\subsection{VRIR types}
+\section{Mapping Types}
+\subsection{VRIR Types}
 Data types in VRIR, known as VTypes, can be categorised into 5 types :
-\subsection{Scalar type}
+\subsection{Scalar Type}
 The scalar type is used define the primitive data type.
 Different types of Scalar values are Int32, Int64, Float32, Float64 and Bool.
 The mapping of VTypes to different C++ types is shown in table \ref{tab:typeMap}.
@@ -123,13 +123,22 @@ Matrix Transpose                            & Array     & -         & transpose 
 \end{table}
 \section{VrArrays}
 \label{sec:vrarray}
-VrArrays are the structs used to represent arrays in the generated code. 
+VrArrays are the structs used to represent arrays in the generated code. They contain a pointer to the data as well as other necessary information such as the number of dimensions and the size of each dimension. There are different VrArrays for different data types. The different VrArray types and the VRIR types from which they are mapped are given in table \ref{tab:arrayTypeMap}. The structure of VrArrayF64 in given below. 
+\begin{lstlisting}[language=c]
+typedef struct VrArrayF64{
+  double *data;
+  dim_type* dims;  
+  int ndims;
+}VrArrayF64;
+\end{lstlisting}
+There are separate VrArray types for complex and real arrays of the same type. All operations on arrays in the language runtime take VrArrays as input. This allows  single parameter to be passed for array instead of passing the data, dimensions and number of dimensions separately.
+\section{Functions} 
 \section{Statements}
 \subsection{Assignment statement}
 \subsection{For Statement}
 \section{Basic Indexing}
-\subsection{ Generating single index value from multiple indices}
-\subsection{negative indexing}
-\section{Advanced indexing}
+\subsection{ Generating a single index value from multiple indices}
+\subsection{Negative Indexing}
+\section{Advanced Indexing}
 \subsection{VrIndex}
 \subsection{Array Slicing}

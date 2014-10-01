@@ -1,4 +1,4 @@
-An important contribution of the thesis is the static generation of C++ code from VRIR. Due to differences in the semantics of VRIR and C++, we faced various challenges during code generation. As described in \chapref{chap:Background}, VRIR is a high level strongly typed AST designed to support easy compilation of a wide range of Array based languages. Hence, it supports different indexing schemes such as 0-indexing, 1-indexing and negative indexing as well as different array layout schemes such as row-major and column-major. C++ on the other hand does not have an in-built support for arrays, and only supports 0-indexing and a row major layout. Moreover, VRIR also supports multiple returns. On the other hand, we can only return a single value, which can be a scalar, class, struct or a pointer, in C++. This chapter describes how different nodes in VRIR are mapped to C++ constructs including those which C++ does not implicitly support.
+An important contribution of the thesis is the static generation of C++ code from VRIR. Due to differences in the semantics of VRIR and C++, we faced various challenges during code generation. As described in \chapref{chap:Background}, VRIR is a high level strongly typed AST designed to support easy compilation of a wide range of Array based languages. Hence, it supports different indexing schemes such as 0-indexing, 1-indexing and negative indexing as well as different array layout schemes such as row-major and column-major. C++ on the other hand does not have an built in support for arrays, and only supports 0-indexing and a row major layout. Moreover, VRIR also supports multiple returns. On the other hand, we can only return a single value, which can be a scalar, class, struct or a pointer, in C++. This chapter describes how different nodes in VRIR are mapped to C++ constructs including those which C++ does not implicitly support.
 \section{Mapping Types}
 \subsection{VRIR Types}
 Data types in VRIR, known as VTypes, can be categorised into 5 types :
@@ -10,16 +10,18 @@ The mapping of VTypes to different C++ types is shown in table \ref{tab:typeMap}
 \centering
 \begin{tabular}{|c|c|c|c|}
 \hline
-\multicolumn{2}{|c|}{ScalarType}                                                                 & \multirow{2}{*}{Complexity}  & \multirow{2}{*}{C++ types} \\ \cline{1-2}
+\multicolumn{2}{|c|}{Scalar Type}                                                                 & \multirow{2}{*}{Real / Complex}  & \multirow{2}{*}{C++ types} \\ \cline{1-2}
 Name                                         & S-Expression                                      &                              &                            \\ \hline
 \multirow{2}{*}{Float32}                     & \multicolumn{1}{c|}{\multirow{2}{*}{( float32 )}} & REAL                         & float                        \\ \cline{3-4} 
                                              & \multicolumn{1}{c|}{}                             & \multicolumn{1}{c|}{COMPLEX} & float complex              \\ \hline
 \multirow{2}{*}{Float64}                     & \multicolumn{1}{c|}{\multirow{2}{*}{( float64 )}} & REAL                         & double                       \\ \cline{3-4} 
                                              & \multicolumn{1}{c|}{}                             & \multicolumn{1}{c|}{COMPLEX} & double complex             \\ \hline
 \multicolumn{1}{|c|}{\multirow{2}{*}{Int32}} & \multirow{2}{*}{( int32 )}                        & REAL                         & int                      \\ \cline{3-4} 
-\multicolumn{1}{|c|}{}                       &                                                   & \multicolumn{1}{c|}{COMPLEX} & -                          \\ \hline
+\multicolumn{1}{|c|}{}                       &                                                   & \multicolumn{1}{c|}{COMPLEX} & Not Supported                          \\ \hline
 \multicolumn{1}{|c|}{\multirow{2}{*}{Int64}} & \multirow{2}{*}{( int64 )}                        & REAL                         & long                     \\ \cline{3-4} 
-\multicolumn{1}{|c|}{}                       &                                                   & \multicolumn{1}{c|}{COMPLEX} & -                          \\ \hline
+\multicolumn{1}{|c|}{}                       &                                                   & \multicolumn{1}{c|}{COMPLEX} & Not Supported                          \\ \hline
+\multicolumn{1}{|c|}{\multirow{2}{*}{Bool}} & \multirow{2}{*}{( bool )}                        & REAL                         & bool                     \\ \cline{3-4} 
+\multicolumn{1}{|c|}{}                       &                                                   & \multicolumn{1}{c|}{COMPLEX} & Not Supported                          \\ \hline
 \end{tabular}
 \caption[VType to C++ type mapping]{VType to C++ type mapping. The tables shows the different C++ will be mapped to from the VTypes.} 
 \label{tab:typeMap}
@@ -41,7 +43,7 @@ Name                                                                       & Com
 \multicolumn{1}{|c|}{\begin{tabular}[c]{@{}l@{}}Bool\\ Array\end{tabular}} & REAL       & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}( arraytype :ndims :layout \\ ( int32 ctype: real ) )\end{tabular}}      & \multicolumn{1}{c|}{VrArrayB}    \\ \hline
 
 \end{tabular}
-\caption[ArrayTypeTable]{ArrayType map. The table shows the VrArray types the ArrayTypes in VRIR are mapped to.}
+\caption[Array Types]{ArrayType map. The table shows the VrArray types the ArrayTypes in VRIR are mapped to.}
 \label{tab:arrayTypeMap}
 \end{table}
 More information about the structure of VrArrays can be found in section \ref{sec:vrarray}

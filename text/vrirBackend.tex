@@ -39,13 +39,70 @@ Name                                                                       & Rea
 \begin{tabular}[c]{@{}c@{}}Int32 \\ Array\end{tabular}                     & REAL       & \begin{tabular}[c]{@{}c@{}}( arraytype :ndims :layout \\ ( int32 ctype: real ) )\end{tabular}                           & VrArrayI32                       \\ \hline
 \begin{tabular}[c]{@{}c@{}}Int64 \\ Array\end{tabular}                     & REAL       & \begin{tabular}[c]{@{}c@{}}( arraytype :ndims :layout \\ ( int32 ctype: real ) )\end{tabular}                           & VrArrayI64                       \\ \hline
 \multicolumn{1}{|c|}{\begin{tabular}[c]{@{}l@{}}Bool\\ Array\end{tabular}} & REAL       & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}( arraytype :ndims :layout \\ ( int32 ctype: real ) )\end{tabular}}      & \multicolumn{1}{c|}{VrArrayB}    \\ \hline
-
 \end{tabular}
 \caption[Array Types]{ArrayType map. The table shows the VrArray types the ArrayTypes in VRIR are mapped to.}
 \label{tab:arrayTypeMap}
 \end{table}
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+VrArray Type & Data Field Type \\ \hline
+VrArrayF64   & double          \\ \hline
+VrArrayF32   & float           \\ \hline
+VrArrayCF64  & double complex  \\ \hline
+VrArrayCF32  & float complex  \\ \hline
+VrArrayI64   & long            \\ \hline
+VrArrayI32   & int             \\ \hline
+VrArrayB     & bool            \\ \hline
+\end{tabular}
+\caption[Data field types of different VrArrays]{Data field types of different VrArrays. Table depicting the types of the data field for different VrArray types.}
+\label{tab:arrayDataMap}
+\end{table}
+
 C++ does not implicitly define types for arrays. Hence, we implemented structs for arrays of all the data types supported by VRIR. We call the structs collectively as VrArrays. There are separate VrArrays for and real and complex arrays. The different VrArray types for real array are shown in table \ref{tab:arrayTypeMap}.
-More information about the structure of VrArrays can be found in section \ref{sec:vrarray}
+\subsubsection{VrArrays}
+VrArrays are the structs used to represent arrays in the generated code. They contain a pointer to the data as well as other necessary information such as the number of dimensions and the size of each dimension. There are different VrArrays for different data types. The different VrArray types and the VRIR types from which they are mapped are given in table \ref{tab:arrayTypeMap}. The structure of the different VrArrays in given below. Each VrArray has a data field which is a pointer to the array data. The type of the data field depends on the type of the VrArray. For example, the type of VrArrayF64, which is used to represent an float64 array is double. 
+There are separate VrArray types for complex and real arrays of the same type. All operations on arrays in the language runtime take VrArrays as input. This allows single parameter to be passed for array instead of passing the data, dimensions and number of dimensions separately. The full list of VrArrays and the types of their corresponding data fields is given in table \ref{tab:arrayDataMap}.
+\begin{lstlisting}[language=c, label={vrArrayF64Struct}, caption={Structures of different VrArrays}]
+typedef struct VrArrayF64{
+  double *data;
+  dim_type* dims;  
+  int ndims;
+}VrArrayF64;
+
+typedef struct VrArrayCF64{
+  double complex *data;
+  dim_type* dims;  
+  int ndims;
+}VrArrayCF64;
+
+typedef struct VrArrayF32{
+  float *data;
+  dim_type* dims;  
+  int ndims;
+}VrArrayF32;
+
+typedef struct VrArrayCF32{
+  float complex *data;
+  dim_type* dims;  
+  int ndims;
+}VrArrayCF32;
+
+typedef struct VrArrayI32{
+  int *data;
+  dim_type* dims;  
+  int ndims;
+}VrArrayI32;
+
+typedef struct VrArrayI64{
+  int *data;
+  dim_type* dims;  
+  int ndims;
+}VrArrayI64;
+\end{lstlisting}
+
 \subsection{Void Type}
 \begin{table}[htbp]
 \centering
@@ -122,62 +179,6 @@ Matrix Transpose                            & Array     & -         & transpose 
 \caption[List of operations on Arrays]{The table shows the different C++ functions array operators are mapped to. }
 \label{tab:arrayOpMap}
 \end{table}
-\section{VrArrays}
-\label{sec:vrarray}
-\begin{table}[htbp]
-\centering
-\begin{tabular}{|c|c|}
-\hline
-VrArray Type & Data Field Type \\ \hline
-VrArrayF64   & double          \\ \hline
-VrArrayF32   & float           \\ \hline
-VrArrayCF64  & double complex  \\ \hline
-VrArrayI64   & long            \\ \hline
-VrArrayI32   & int             \\ \hline
-VrArrayB     & bool            \\ \hline
-\end{tabular}
-\caption[Data field types of different VrArrays]{Data field types of different VrArrays. Table depicting the types of the data field for different VrArray types.}
-\label{tab:arrayDataMap}
-\end{table}
-VrArrays are the structs used to represent arrays in the generated code. They contain a pointer to the data as well as other necessary information such as the number of dimensions and the size of each dimension. There are different VrArrays for different data types. The different VrArray types and the VRIR types from which they are mapped are given in table \ref{tab:arrayTypeMap}. The structure of the different VrArrays in given below. Each VrArray has a data field which is a pointer to the array data. The type of the data field depends on the type of the VrArray. For example, the type of VrArrayF64, which is used to represent an float64 array is double. The full list of VrArrays and the types of their corresponding data fields is given in table \ref{tab:arrayDataMap}
-\begin{lstlisting}[language=c, label={vrArrayF64Struct}, caption={Structures of different VrArrays}]
-typedef struct VrArrayF64{
-  double *data;
-  dim_type* dims;  
-  int ndims;
-}VrArrayF64;
-
-typedef struct VrArrayCF64{
-  double complex *data;
-  dim_type* dims;  
-  int ndims;
-}VrArrayCF64;
-
-typedef struct VrArrayF32{
-  float *data;
-  dim_type* dims;  
-  int ndims;
-}VrArrayF32;
-
-typedef struct VrArrayCF32{
-  float complex *data;
-  dim_type* dims;  
-  int ndims;
-}VrArrayCF32;
-
-typedef struct VrArrayI32{
-  int *data;
-  dim_type* dims;  
-  int ndims;
-}VrArrayI32;
-
-typedef struct VrArrayI64{
-  int *data;
-  dim_type* dims;  
-  int ndims;
-}VrArrayI64;
-\end{lstlisting}
-There are separate VrArray types for complex and real arrays of the same type. All operations on arrays in the language runtime take VrArrays as input. This allows single parameter to be passed for array instead of passing the data, dimensions and number of dimensions separately.
 \section{Functions} 
 \section{Statements}
 \subsection{Assignment statement}

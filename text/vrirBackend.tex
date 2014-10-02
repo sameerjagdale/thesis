@@ -122,18 +122,55 @@ The void type is used in most cases inside a Func Type to convey the absence of 
 \subsection{Tuple Type}
 Tuple types are used to define data structures which can have data of different types. While generating C++ code, the tuple types are used to generate structs that are in turn used to support data structures containing heteregenous data.% Table gives an example of a tuple type and the equivalent C++ struct that is generated.
 \subsection{Func Type}
-Func types are associated with function definitions and function handles. They contain information about the types of the input and out parameters of the function. The function types are for generating function definition.
-A Func type and its equivalent function definition is shown in table \ref{tab:funcTypeMap}
-\begin{table}[h]
+Func types are associated with function definitions and function handles. They contain information about the types of the input and out parameters of the function. The function types are used for generating function definition.
+\section{Functions} 
+\begin{table}[htbp]
 \begin{tabular}{|l|l|}
 \hline
 \multicolumn{1}{|c|}{Func Type}                                                                                                                                                                                                                                       & \multicolumn{1}{c|}{Generated Function}                                                          \\ \hline
-\begin{tabular}[c]{@{}l@{}}(functype\\ (intypes \\ ( arraytype :layout colmajor :ndims 2 \\  (float64 :ctype 0))\\  ( arraytype :layout colmajor :ndims 2 \\ (float64 :ctype 0))) \\ (outtypes \\ ( arraytype :layout colmajor :ndims 2 \\ (float64 :ctype 0))))\end{tabular} & \begin{tabular}[c]{@{}l@{}}VrArrayPtrF64 \\ babai (VrArrayPtrF64 R,VrArrayPtrF64 y)\end{tabular} \\ \hline
+\begin{tabular}[c]{@{}l@{}} (function babai \\
+   (functype \\
+   (intypes \\
+   ( arraytype :layout colmajor :ndims 2(float64 :ctype 0)) \\
+	( arraytype :layout colmajor :ndims 2(float64 :ctype 0))) \\
+   (outtypes \\
+   ( arraytype :layout colmajor :ndims 2(float64 :ctype 0)))) \\
+	(arglist \\
+   (arg :id0 \\
+   )(arg :id1 \\
+   )) \\
+	(body ... )
+\end{tabular} & \begin{tabular}[c]{@{}l@{}}VrArrayPtrF64 \\ babai (VrArrayPtrF64 R,VrArrayPtrF64 y)\end{tabular} \\ \hline
 \end{tabular}
 \caption[funcTypeMap]{The table shows an example func type and the equivalent function signature that was generated using the func type.}
 \label{tab:funcTypeMap}
 \end{table}
-\section{Functions} 
+Functions in VRIR are compiled to separate functions in C++. The function node in VRIR has multiple children all of which are required to generate the C++ code for the function. The list of children node of the function node and their role in the code generation process is as follows :
+\begin{itemize}
+\item Name : The function name represents the name of the function. A C++ function of the same name is generated.   
+\item Arglist : The arglist is a list of integers which are the Ids of the input arguments in the symbol table.
+\item Func type : The Func type is used for generating the input argument types and the return type.
+\item Body : The body represents the body of the function. It consists of a list of statements. 
+\end{itemize}
+The table \ref{tab:funcTypeMap} depicts how a function node in VRIR is converted to a C++ function.
+\subsection{Return types in VRIR}
+\begin{lstlisting}[language=c,caption={Generated structure to handle multiple returns.},label={lst:multReturn}]
+//Structure definition
+typedef struct struct_adapt_ret { 
+   VrArrayPtrF64 ret_data0;
+   double ret_data1;
+   double ret_data2;
+   
+   struct_adapt_ret(VrArrayPtrF64 ret_data0,double ret_data1,double ret_data2) :ret_data0(ret_data0),ret_data1(ret_data1),ret_data2(ret_data2)
+   {
+   }
+   
+}struct_adapt_ret;
+
+//Function declaration
+struct_adapt_ret adapt(double a,double b,double sz_guess,double tol);
+\end{lstlisting}
+C++ only permits single return types. On the other hand, VRIR supports multiple return types. In order to bridge this difference in semantics, we generate a struct definition whose fields are of the same types as the return types. A parameterized constructor is also provided to assign the different variables that need to be returned to the member fields of the struct. The structure definition and the function definition that returns the structure is shown in listing \ref{lst:multReturn}.
 \section{Operators}
 \label{sec:operators}
 Arithemetic operators in VRIR, such as plus, minus, mult, div can only have scalar operands. Hence generating C++ code these operators in straightforward. They are mapped to the operators internally supported by C++. Thus plus is mapped to the `+' operator in C++, minus is mapped to `-'. The complete list is given in table \ref{tab:opMap}. \\

@@ -60,35 +60,22 @@ VrArrayB     & bool            \\ \hline
 \caption[Data field types of different VrArrays]{Data field types of different VrArrays. Table depicting the types of the data field for different VrArray types.}
 \label{tab:arrayDataMap}
 \end{table}
-
-C++ does not implicitly define types for arrays. Hence, we implemented structs for arrays of all the data types supported by VRIR. We call the structs collectively as VrArrays. There are separate VrArrays for and real and complex arrays. The different VrArray types for real array are shown in table \ref{tab:arrayTypeMap}.
+Unlike array-based languages, C++ arrays do not store additional information such as the number of dimensions or the sizes of each dimensions. This information is useful while performing various operations such as multiplication, addition etc and hence it was necessary for us to store it. One solution was to take store this information separately. However, this approach increases the number of parameters that need to be passed to functions implementing array operations. Moreover, when assigning to an array additional code that needs to be generated to update the dimension sizes and the number of dimensions. Hence, we implemented structs for arrays of all the data types supported by VRIR. We call the structs collectively as VrArrays. The equivalent VrArray types for different array types are shown in table \ref{tab:arrayTypeMap}.
 \subsubsection{VrArrays}
-VrArrays are the structs used to represent arrays in the generated code. They contain a pointer to the data as well as other necessary information such as the number of dimensions and the size of each dimension. There are different VrArrays for different data types. The different VrArray types and the VRIR types from which they are mapped are given in table \ref{tab:arrayTypeMap}. The structure of the different VrArrays in given below. Each VrArray has a data field which is a pointer to the array data. The type of the data field depends on the type of the VrArray. For example, the type of VrArrayF64, which is used to represent an float64 array is double. 
+VrArrays are represented as C++ structs and encapsulate array data as well as the meta-data. They contain a pointer to the data as well as other necessary information such as the number of dimensions and the size of each dimension. There are different VrArrays for different data types. The different VrArray types and the VRIR types from which they are mapped are given in table \ref{tab:arrayTypeMap}. The structure of the different VrArrays in given below. Each VrArray has a data field which is a pointer to the array data. The type of the data field depends on the type of the VrArray. For example, the type of VrArrayF64, which is used to represent an float64 array is double. 
 There are separate VrArray types for complex and real arrays of the same type. All operations on arrays in the language runtime take VrArrays as input. This allows single parameter to be passed for array instead of passing the data, dimensions and number of dimensions separately. The full list of VrArrays and the types of their corresponding data fields is given in table \ref{tab:arrayDataMap}.
-\begin{lstlisting}[language=c, label={vrArrayF64Struct}, caption={Structures of different VrArrays}]
+\begin{lstlisting}[language=c, label={vrArrayF64Struct}, caption={Structures of VrArrays for real data}]
 typedef struct VrArrayF64{
   double *data;
   dim_type* dims;  
   int ndims;
 }VrArrayF64;
 
-typedef struct VrArrayCF64{
-  double complex *data;
-  dim_type* dims;  
-  int ndims;
-}VrArrayCF64;
-
 typedef struct VrArrayF32{
   float *data;
   dim_type* dims;  
   int ndims;
 }VrArrayF32;
-
-typedef struct VrArrayCF32{
-  float complex *data;
-  dim_type* dims;  
-  int ndims;
-}VrArrayCF32;
 
 typedef struct VrArrayI32{
   int *data;
@@ -101,6 +88,23 @@ typedef struct VrArrayI64{
   dim_type* dims;  
   int ndims;
 }VrArrayI64;
+
+\end{lstlisting}
+
+\begin{lstlisting}[language=c, label={vrArrayF64Struct}, caption={Structures of VrArrays for complex data}]
+
+typedef struct VrArrayCF32{
+  float complex *data;
+  dim_type* dims;  
+  int ndims;
+}VrArrayCF32;
+
+typedef struct VrArrayCF64{
+  double complex *data;
+  dim_type* dims;  
+  int ndims;
+}VrArrayCF64;
+
 \end{lstlisting}
 
 \subsection{Void Type}
@@ -129,6 +133,7 @@ A Func type and its equivalent function definition is shown in table \ref{tab:fu
 \caption[funcTypeMap]{The table shows an example func type and the equivalent function signature that was generated using the func type.}
 \label{tab:funcTypeMap}
 \end{table}
+\section{Functions} 
 \section{Operators}
 \label{sec:operators}
 Arithemetic operators in VRIR, such as plus, minus, mult, div can only have scalar operands. Hence generating C++ code these operators in straightforward. They are mapped to the operators internally supported by C++. Thus plus is mapped to the `+' operator in C++, minus is mapped to `-'. The complete list is given in table \ref{tab:opMap}. \\
@@ -179,7 +184,6 @@ Matrix Transpose                            & Array     & -         & transpose 
 \caption[List of operations on Arrays]{The table shows the different C++ functions array operators are mapped to. }
 \label{tab:arrayOpMap}
 \end{table}
-\section{Functions} 
 \section{Statements}
 \subsection{Assignment statement}
 \subsection{For Statement}

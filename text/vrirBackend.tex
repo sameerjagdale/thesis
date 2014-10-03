@@ -120,10 +120,13 @@ Void Type & Generated Void \\ \hline
 \end{table}
 The void type is used in most cases inside a Func Type to convey the absence of either input or output parameters. The void type is mapped to a simple `void' in C++. Table \ref{tab:voidTypeMap} shows the mapping
 \subsection{Tuple Type}
-Tuple types are used to define data structures which can have data of different types. While generating C++ code, the tuple types are used to generate structs that are in turn used to support data structures containing heteregenous data.% Table gives an example of a tuple type and the equivalent C++ struct that is generated.
+Tuple types are used to define data structures which can have data of different types. While generating C++ code, the tuple types are used to generate structs that are in turn used to support data structures containing heteregenous data.
 \subsection{Func Type}
-Func types are associated with function definitions and function handles. They contain information about the types of the input and out parameters of the function. The function types are used for generating function definition.
+Func types are associated with function definitions and function handles. They contain information about the types of the input and out parameters of the function. The function types are used for generating function definition. More information about how function definitions are generated in given in section \ref{sec:functions}.
+\section{Modules}
+Modules are top-level constructs in VRIR. They contain one or more functions which have to be compiled to C++. A module also has an attribute called indexing which defines the indexing scheme. The indexing scheme can either be 0 or 1 indexing. More details about how the indexing attribute is used can be found in section \ref{sec:indexing}.
 \section{Functions} 
+\label{sec:functions}
 \begin{table}[htbp]
 \begin{tabular}{|l|l|}
 \hline
@@ -222,10 +225,14 @@ Matrix Transpose                            & Array     & -         & transpose 
 \label{tab:arrayOpMap}
 \end{table}
 \section{Statements}
-\subsection{Assignment statement}
+VRIR supports various statements such as assignments, for-loops, while-loops etc. Most of the statements are directly supported in C++. Table contains a list of VRIR statement types and their equivalent C++ types that are generated. The assignment, for and return statements have special cases which need to be supported.
+\subsection{Assignment Statement}
+
 \subsection{For Statement}
+\subsection{Return Statement}
 \section{Expressions}
 \section{Basic Indexing}
+\label{sec:indexing}
 \subsection{ Generating a single index value from multiple indices}
 \subsection{Negative Indexing}
 \section{Advanced Indexing}

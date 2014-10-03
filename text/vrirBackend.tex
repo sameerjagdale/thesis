@@ -225,7 +225,7 @@ Matrix Transpose                            & Array     & -         & transpose 
 \label{tab:arrayOpMap}
 \end{table}
 \section{Statements}
-VRIR supports various statements such as assignments, for-loops, while-loops etc. Most of the statements are directly supported in C++. Table contains a list of VRIR statement types and their equivalent C++ types that are generated. The assignment, for and return statements have special cases which need to be supported.
+VRIR supports various statements such as assignments, for-loops, while-loops etc. Most of the statements are directly supported in C++. The assignment, for and return statements have special cases which need to be supported. VRIR also supports the parallel for statement. This statement is compiled to an equivalent for loop with OpenMP pragmas in C++.
 \subsection{Assignment Statement}
 
 \subsection{For Statement}

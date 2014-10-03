@@ -177,57 +177,146 @@ C++ only permits single return types. On the other hand, VRIR supports multiple 
 \section{Operators}
 \label{sec:operators}
 Arithemetic operators in VRIR, such as plus, minus, mult, div can only have scalar operands. Hence generating C++ code these operators in straightforward. They are mapped to the operators internally supported by C++. Thus plus is mapped to the `+' operator in C++, minus is mapped to `-'. The complete list is given in table \ref{tab:opMap}. \\
-\begin{table}[h]
-\centering
-\begin{tabular}{|c|c|}
+					\begin{table}[h]
+					\centering
+					\begin{tabular}{|c|c|}
+					\hline
+					VRIR operators & C++ Operators \\ \hline
+					plus           & +             \\ \hline
+					minus          & -             \\ \hline
+					mult           & *             \\ \hline
+					div            & /             \\ \hline
+					and            & \&\&           \\ \hline
+					or             & ||            \\ \hline
+					lt             & \textless     \\ \hline
+					leq            & \textless=    \\ \hline
+					gt             & \textgreater  \\ \hline
+					geq            & \textgreater= \\ \hline
+					eq             & ==            \\ \hline
+					neq            & !=            \\ \hline
+					\end{tabular}
+					\caption[opMap]{VRIR operators to C++ operators Mapping. The table shows the C++ operators to which the VRIR operators are mapped.}
+					\label{tab:opMap}
+					\end{table}
+					Operations on arrays, on the other hand, are mapped to the LibCall expression in VRIR. Since C++ does not have internal operators for arrays we implemented function to support these operations on arrays. These functions are housed inside the language-specific runtime library. Where ever possible these functions made calls to BLAS functions for enchanced performance. In case of the \matlab\cite{matlab} runtime, we use the Intel Math Kernel Library\cite{mkl} or MKL implementation of BLAS and in case of Python\cite{python}, we use the openBLAS\cite{openblas} implementation.
+					\begin{table}[h]
+					\centering
+					\begin{tabular}{|c|c|c|c|}
+					\hline
+					VRIR Lib Call                               & Operand 1 & Operand 2 & C++ function \\ \hline
+					\multirow{2}{*}{Matrix Multiplication}      & Array     & Array     & mmult        \\ \cline{2-4} 
+					& Array     & Scalar    & scal\_mult   \\ \hline
+					\multirow{2}{*}{Elementwise Multiplication} & Array     & Array     & vec\_mult    \\ \cline{2-4} 
+					& Array     & Scalar    & scal\_mult   \\ \hline
+					\multirow{2}{*}{Matrix Left Division}       & Array     & Array     & mat\_ldiv    \\ \cline{2-4} 
+					& Array     & Scalar    & scal\_div    \\ \hline
+					\multirow{2}{*}{Matrix Right Division}      & Array     & Array     & mat\_rdiv    \\ \cline{2-4} 
+					& Array     & Scalar    & scal\_div    \\ \hline
+					\multirow{2}{*}{Elementwise Division}       & Array     & Array     & elem\_div    \\ \cline{2-4} 
+					& Array     & Scalar    & scal\_div    \\ \hline
+					\multirow{2}{*}{Array Addition}             & Array     & Array     & vec\_add     \\ \cline{2-4} 
+					& Array     & Scalar    & scal\_add    \\ \hline
+					\multirow{2}{*}{Array Subtraction}          & Array     & Array     & vec\_sub     \\ \cline{2-4} 
+					& Array     & Scalar    & scal\_minus  \\ \hline
+					Array Copy                                  & Array     & Array     & vec\_copy    \\ \hline
+					Matrix Transpose                            & Array     & -         & transpose    \\ \hline
+					\end{tabular}
+					\caption[List of operations on Arrays]{The table shows the different C++ functions array operators are mapped to. }
+					\label{tab:arrayOpMap}
+					\end{table}
+					\section{Statements}
+					VRIR supports various statements such as assignments, for-loops, while-loops etc. Most of the statements are directly supported in C++. The assignment, for and return statements have special cases which need to be supported. VRIR also supports the parallel for statement. This statement is compiled to an equivalent for loop with OpenMP pragmas in C++.
+					\subsection{Assignment Statement}
+					While generating C++ code for the assignment statement, we had to take into account different variations of the statement as well generate additional code. Different variations include statements with an array slice operation on the left hand side, statements containing function calls on the right hand side which have multiple returns etc. We also had to generate array boundscheck statements in case the statement contains index expressions. 
+					\subsubsection{Simple Assignment Statements}
+					Simple assignment statements are used when the left hand side is a name expression or an index expression without the array slice operator. The number of expressions on the left hand side can not be more than one. An example of a simple assignment statement is given in table \ref{tab:simpleAssignment}.
+	\begin{table}[htbp]
+	\begin{tabular}{|l|l|}
+					\hline \\
+							VRIR & Generated C++ code\\
+							\hline
+{
+\begin{lstlisting}[frame=none, language=lisp, label={lst:SimpleAssignment}]
+(assignstmt
+ (lhs
+	(name :id 5
+	 (float64 :ctype 0)
+	)
+ )
+ (rhs
+	(index :arrayid 0 :copyslice %0
+	 (arraytype :layout colmajor :ndims 2
+				(float64 :ctype 0)
+	 )
+	 (indices
+				(index :boundscheck %1 :negative %0
+					 (name :id 4
+							(int64 :ctype 0)
+					 )
+				)
+	 )
+	)
+ )
+)
+\end{lstlisting}
+} & 
+{
+\begin{lstlisting}[frame=none, language=c, label={lst:SimpleAssignment}]
+temp = VR_GET_DATA_F64(A)[(i - 1)];
+\end{lstlisting}
+} \\
 \hline
-VRIR operators & C++ Operators \\ \hline
-plus           & +             \\ \hline
-minus          & -             \\ \hline
-mult           & *             \\ \hline
-div            & /             \\ \hline
-and            & \&\&           \\ \hline
-or             & ||            \\ \hline
-lt             & \textless     \\ \hline
-leq            & \textless=    \\ \hline
-gt             & \textgreater  \\ \hline
-geq            & \textgreater= \\ \hline
-eq             & ==            \\ \hline
-neq            & !=            \\ \hline
 \end{tabular}
-\caption[opMap]{VRIR operators to C++ operators Mapping. The table shows the C++ operators to which the VRIR operators are mapped.}
-\label{tab:opMap}
+\caption[Simple Assignment Statement]{ The table shows an example of the simple assignment statement in VRIR and the equivalent C++ code that is generated from it.}
+\label{tab:simpleAssignment}
 \end{table}
-Operations on arrays, on the other hand, are mapped to the LibCall expression in VRIR. Since C++ does not have internal operators for arrays we implemented function to support these operations on arrays. These functions are housed inside the language-specific runtime library. Where ever possible these functions made calls to BLAS functions for enchanced performance. In case of the \matlab\cite{matlab} runtime, we use the Intel Math Kernel Library\cite{mkl} or MKL implementation of BLAS and in case of Python\cite{python}, we use the openBLAS\cite{openblas} implementation.
-\begin{table}[h]
-\centering
-\begin{tabular}{|c|c|c|c|}
-\hline
-VRIR Lib Call                               & Operand 1 & Operand 2 & C++ function \\ \hline
-\multirow{2}{*}{Matrix Multiplication}      & Array     & Array     & mmult        \\ \cline{2-4} 
-                                            & Array     & Scalar    & scal\_mult   \\ \hline
-\multirow{2}{*}{Elementwise Multiplication} & Array     & Array     & vec\_mult    \\ \cline{2-4} 
-                                            & Array     & Scalar    & scal\_mult   \\ \hline
-\multirow{2}{*}{Matrix Left Division}       & Array     & Array     & mat\_ldiv    \\ \cline{2-4} 
-                                            & Array     & Scalar    & scal\_div    \\ \hline
-\multirow{2}{*}{Matrix Right Division}      & Array     & Array     & mat\_rdiv    \\ \cline{2-4} 
-                                            & Array     & Scalar    & scal\_div    \\ \hline
-\multirow{2}{*}{Elementwise Division}       & Array     & Array     & elem\_div    \\ \cline{2-4} 
-                                            & Array     & Scalar    & scal\_div    \\ \hline
-\multirow{2}{*}{Array Addition}             & Array     & Array     & vec\_add     \\ \cline{2-4} 
-                                            & Array     & Scalar    & scal\_add    \\ \hline
-\multirow{2}{*}{Array Subtraction}          & Array     & Array     & vec\_sub     \\ \cline{2-4} 
-                                            & Array     & Scalar    & scal\_minus  \\ \hline
-Array Copy                                  & Array     & Array     & vec\_copy    \\ \hline
-Matrix Transpose                            & Array     & -         & transpose    \\ \hline
+\subsubsection{Assignment Statements with Array Slice set}
+				In assignment statements which fall under this category, the left hand side expression is an index expression with atleast one slice index. The right hand side can be any expression. The array slice set operation allows a region of the array to be assigned values. Since C++ does not support this, we have provide a function in the runtime library which implements this. During code generation, the assignment statement is compiled to the function callimplementing array slice set. The parameters to this call are the array variable of index expression on the left hand side, the right hand side expression and the set of indices which define the region of the array to which the values have to be assigned to. The indices are converted to VrIndex structs. More information to VrIndex can be found sub-section \ref{subsec:vrindex}.
+\begin{table}[htbp]
+\begin{tabular}{|l|l|}
+{
+\begin{lstlisting}
+(assignstmt
+	(lhs
+		(index :arrayid 12 :copyslice %0 
+			( arraytype :layout colmajor :ndims 2
+			 	(float64 :ctype 0))
+		  (indices
+				(index :boundscheck %1 :negative %0
+			 		(range :exclude %0
+			  		(start 
+			   			(plus
+								(int64 :ctype 0)
+								(lhs
+				 					(name :id 13
+				  					(int64 :ctype 0)
+									)
+								)
+								(rhs
+				 					(realconst :ival 1
+				  					(int64 :ctype 0)))))
+			  		(stop 
+			   			(name :id 8
+								(float64 :ctype 0)
+			   			)
+			  		)
+			 	)
+			)
+		 )
+	 )
+	)
+	(rhs
+		<RHS Expression>)
+	)
+\end{lstlisting}
+} & 
+{
+		\begin{lstlisting}
+rrk.setArraySliceSpec(<RHS Expression>, VrIndex((k + 1),n,1));
+		\end{lstlisting}
+}
 \end{tabular}
-\caption[List of operations on Arrays]{The table shows the different C++ functions array operators are mapped to. }
-\label{tab:arrayOpMap}
 \end{table}
-\section{Statements}
-VRIR supports various statements such as assignments, for-loops, while-loops etc. Most of the statements are directly supported in C++. The assignment, for and return statements have special cases which need to be supported. VRIR also supports the parallel for statement. This statement is compiled to an equivalent for loop with OpenMP pragmas in C++.
-\subsection{Assignment Statement}
-
 \subsection{For Statement}
 \subsection{Return Statement}
 \subsection{Break Statement}
@@ -243,6 +332,7 @@ VRIR supports various statements such as assignments, for-loops, while-loops etc
 \subsection{Negative Indexing}
 \section{Advanced Indexing}
 \subsection{VrIndex}
+\label{subsec:vrindex}
 \subsection{Array Slicing}
 \section{Symbol Table}
 \section{Run time library}

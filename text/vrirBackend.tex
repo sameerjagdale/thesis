@@ -173,11 +173,10 @@ typedef struct struct_adapt_ret {
 //Function declaration
 struct_adapt_ret adapt(double a,double b,double sz_guess,double tol);
 \end{lstlisting}
-C++ only permits single return types. On the other hand, VRIR supports multiple return types. In order to bridge this difference in semantics, we generate a struct definition whose fields are of the same types as the return types. A parameterized constructor is also provided to assign the different variables that need to be returned to the member fields of the struct. The structure definition and the function definition that returns the structure is shown in listing \ref{lst:multReturn}.
+C++ only permits single return types. On the other hand, VRIR supports multiple return types. In order to bridge this difference in semantics, we generate a struct definition whose fields are of the same types as the return types. A parameterized constructor is also provided to assign the different variables that need to be returned to the member fields of the struct. The structure definition and the function definition that returns the structure is shown in listing \ref{lst:multReturn}. The struct name is generated using the name of the function. The format of a struct for multiple returns is, struct\_<function name>\_ret. This allows the calling function to determine the name of the struct while declaring a variable. 
 \section{Operators}
 \label{sec:operators}
-Arithemetic operators in VRIR, such as plus, minus, mult, div can only have scalar operands. Hence generating C++ code these operators in straightforward. They are mapped to the operators internally supported by C++. Thus plus is mapped to the `+' operator in C++, minus is mapped to `-'. The complete list is given in table \ref{tab:opMap}. \\
-					\begin{table}[h]
+			\begin{table}[htbp]
 					\centering
 					\begin{tabular}{|c|c|}
 					\hline
@@ -198,8 +197,7 @@ Arithemetic operators in VRIR, such as plus, minus, mult, div can only have scal
 					\caption[opMap]{VRIR operators to C++ operators Mapping. The table shows the C++ operators to which the VRIR operators are mapped.}
 					\label{tab:opMap}
 					\end{table}
-					Operations on arrays, on the other hand, are mapped to the LibCall expression in VRIR. Since C++ does not have internal operators for arrays we implemented function to support these operations on arrays. These functions are housed inside the language-specific runtime library. Where ever possible these functions made calls to BLAS functions for enchanced performance. In case of the \matlab\cite{matlab} runtime, we use the Intel Math Kernel Library\cite{mkl} or MKL implementation of BLAS and in case of Python\cite{python}, we use the openBLAS\cite{openblas} implementation.
-					\begin{table}[h]
+					\begin{table}[htbp]
 					\centering
 					\begin{tabular}{|c|c|c|c|}
 					\hline
@@ -224,12 +222,14 @@ Arithemetic operators in VRIR, such as plus, minus, mult, div can only have scal
 					\caption[List of operations on Arrays]{The table shows the different C++ functions array operators are mapped to. }
 					\label{tab:arrayOpMap}
 					\end{table}
-					\section{Statements}
-					VRIR supports various statements such as assignments, for-loops, while-loops etc. Most of the statements are directly supported in C++. The assignment, for and return statements have special cases which need to be supported. VRIR also supports the parallel for statement. This statement is compiled to an equivalent for loop with OpenMP pragmas in C++.
-					\subsection{Assignment Statement}
-					While generating C++ code for the assignment statement, we had to take into account different variations of the statement as well generate additional code. Different variations include statements with an array slice operation on the left hand side, statements containing function calls on the right hand side which have multiple returns etc. We also had to generate array boundscheck statements in case the statement contains index expressions. 
-					\subsubsection{Simple Assignment Statements}
-					Simple assignment statements are used when the left hand side is a name expression or an index expression without the array slice operator. The number of expressions on the left hand side can not be more than one. An example of a simple assignment statement is given in table \ref{tab:simpleAssignment}.
+Arithemetic operators in VRIR, such as plus, minus, mult, div can only have scalar operands. Hence generating C++ code these operators in straightforward. They are mapped to the operators internally supported by C++. Thus plus is mapped to the `+' operator in C++, minus is mapped to `-'. The complete list is given in table \ref{tab:opMap}. \\
+					Operations on arrays, on the other hand, are mapped to the LibCall expression in VRIR. Since C++ does not have internal operators for arrays we implemented function to support these operations on arrays. These functions are housed inside the language-specific runtime library. Where ever possible these functions made calls to BLAS functions for enchanced performance. In case of the \matlab\cite{matlab} runtime, we use the Intel Math Kernel Library\cite{mkl} or MKL implementation of BLAS and in case of Python\cite{python}, we use the openBLAS\cite{openblas} implementation.
+\section{Statements}
+VRIR supports various statements such as assignments, for-loops, while-loops etc. Most of the statements are directly supported in C++. The assignment, for and return statements have special cases which need to be supported. VRIR also supports the parallel for statement. This statement is compiled to an equivalent for loop with OpenMP pragmas in C++.
+\subsection{Assignment Statement}
+While generating C++ code for the assignment statement, we had to take into account different variations of the statement as well generate additional code. Different variations include statements with an array slice operation on the left hand side, statements containing function calls on the right hand side which have multiple returns etc. 
+\subsubsection{Simple Assignment Statements}
+Simple assignment statements are used when the left hand side is a name expression or an index expression without the array slice operator. The number of expressions on the left hand side can not be more than one. An example of a simple assignment statement is given in table \ref{tab:simpleAssignment}.
 	\begin{table}[htbp]
 	\begin{tabular}{|l|l|}
 					\hline
@@ -372,10 +372,74 @@ BlasDouble::mmult
 } \\
 \hline
 \end{tabular}
-\caption[Assignment with array slice set]{Table shows VRIR with array slicing on the LHS and the equivalent C++ code that is generated.}
+\caption[Assignment with Memory optimisation]{Table shows VRIR with array operations on the LHS and the equivalent C++ code that is generated and optimised.}
 \label{tab:memAssignment}
 \end{table}
 One of the contributions of the thesis was an optimisation where redundant memory allocations during operations on arrays are removed. This optimisation is implemented by passing the array to which the result is assigned to, as a parameter to the function implementing the array operation. This array is the left hand side expression of the assignment statement whereas the right hand side expression is the function call. More information on the optimisation can be found in section \ref{sec:memoptimise}. Table \ref{tab:memAssignment} gives an example of a VRIR representation which can potentially be optimised and the generated C++ code. 
+
+\subsubsection{Assignment Statements with multiple LHS expressions}
+\begin{table}[htbp]
+\begin{tabular}{|c|c|}
+\hline 
+VRIR & C++ backend \\
+\hline 
+{
+\begin{lstlisting}[language=lisp, frame=none, numbers=none]
+(assignstmt
+  (lhs
+    (tuple
+      (tupletype
+        (float64 :ctype 0)
+        ( arraytype :layout colmajor:ndims 2
+          (float64 :ctype 0)
+        )
+        ( arraytype :layout colmajor:ndims 2
+          (float64 :ctype 0))
+        ( arraytype :layout colmajor:ndims 2
+          (float64 :ctype 0)
+        )
+      )
+      (elems
+        (name :id 3
+          (float64 :ctype 0)
+        )
+        (name :id 8
+          ( arraytype :layout colmajor:ndims 2
+            (float64 :ctype 0)
+          )
+        )
+        (name :id 4
+          ( arraytype :layout colmajor:ndims 2
+            (float64 :ctype 0)))  
+        (name :id 9
+          ( arraytype :layout colmajor:ndims 2
+            (float64 :ctype 0)
+          )
+        )
+      )
+    )
+  )
+  (rhs
+      <RHS Expression>
+  )
+)
+\end{lstlisting}
+} & 
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+struct_spqr_ret var_spqr1 = <rhsExpr> 
+nr = var_spqr1.ret_data0;
+S = var_spqr1.ret_data1;
+rx = var_spqr1.ret_data2;
+rn = var_spqr1.ret_data3;
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[Assignment with multiple LHS expressions]{Table shows VRIR with multiple expressions on the LHS and the equivalent C++ code that is generated.}
+\label{tab:multAssignment}
+\end{table}
+Assignment statements can have multiple expressions on the LHS when the RHS expression is a function call with multiple returns. As mentioned in section \ref{sec:functions}, functions with multiple returns are handled by returning a struct containing the return values. In the assignment statement the expression on the LHS are replaced by a struct variable and additional code is generated to assign the values in the struct to the LHS expressions. Table \ref{tab:multAssignment} shows the C++ code that is generated from VRIR.
 \subsection{For Statement}
 \subsection{Return Statement}
 \subsection{Break Statement}

@@ -232,11 +232,11 @@ Arithemetic operators in VRIR, such as plus, minus, mult, div can only have scal
 					Simple assignment statements are used when the left hand side is a name expression or an index expression without the array slice operator. The number of expressions on the left hand side can not be more than one. An example of a simple assignment statement is given in table \ref{tab:simpleAssignment}.
 	\begin{table}[htbp]
 	\begin{tabular}{|l|l|}
-					\hline \\
+					\hline
 							VRIR & Generated C++ code\\
 							\hline
 {
-\begin{lstlisting}[frame=none, language=lisp, label={lst:SimpleAssignment}]
+\begin{lstlisting}[frame=none, language=lisp, label={lst:SimpleAssignment},numbers=none]
 (assignstmt
  (lhs
 	(name :id 5
@@ -261,7 +261,7 @@ Arithemetic operators in VRIR, such as plus, minus, mult, div can only have scal
 \end{lstlisting}
 } & 
 {
-\begin{lstlisting}[frame=none, language=c, label={lst:SimpleAssignment}]
+\begin{lstlisting}[frame=none, language=c, label={lst:SimpleAssignment},numbers=none]
 temp = VR_GET_DATA_F64(A)[(i - 1)];
 \end{lstlisting}
 } \\
@@ -271,12 +271,11 @@ temp = VR_GET_DATA_F64(A)[(i - 1)];
 \label{tab:simpleAssignment}
 \end{table}
 \subsubsection{Assignment Statements with Array Slice set}
-In assignment statements which fall under this category, the left hand side expression is an index expression with atleast one slice index. The right hand side can be any expression. The array slice set operation allows a region of the array to be assigned values. Since C++ does not support this, we have provide a function in the runtime library which implements this. During code generation, the assignment statement is compiled to the function callimplementing array slice set. The parameters to this call are the array variable of index expression on the left hand side, the right hand side expression and the set of indices which define the region of the array to which the values have to be assigned to. The indices are converted to VrIndex structs. More information to VrIndex can be found sub-section \ref{subsec:vrindex}.
 \begin{table}[htbp]
 \begin{tabular}{|c|c|}
-\hline \\
+\hline
 VRIR & C++ backend \\
-\hline \\
+\hline
 {
 \begin{lstlisting}[language=lisp, frame=none, numbers=none]
 (assignstmt
@@ -322,15 +321,16 @@ rrk.setArraySliceSpec
 } \\
 \hline
 \end{tabular}
-\label{sliceAssignment}
 \caption[Assignment with array slice set]{Table shows VRIR with array slicing on the LHS and the equivalent C++ code that is generated.}
+\label{tab:sliceAssign}
 \end{table}
+In assignment statements which fall under this category, the left hand side expression is an index expression with atleast one slice index. The right hand side can be any expression. The array slice set operation allows a region of the array to be assigned values. Since C++ does not support this, we have provide a function in the runtime library which implements this. During code generation, the assignment statement is compiled to the function callimplementing array slice set. The parameters to this call are the array variable of index expression on the left hand side, the right hand side expression and the set of indices which define the region of the array to which the values have to be assigned to. The indices are converted to VrIndex structs. More information to VrIndex can be found sub-section \ref{subsec:vrindex}. Table \ref{tab:sliceAssign} shows a VRIR representation with a slice operation on the left hand side and the equivalent C++ code that is generated.
 \subsubsection{Assignment statements that can be optimised  for redundant memory allocations}
 \begin{table}[htbp]
 \begin{tabular}{|c|c|}
-\hline \\
+\hline 
 VRIR & C++ backend \\
-\hline \\
+\hline 
 {
 \begin{lstlisting}[language=lisp, frame=none, numbers=none]
 (assignstmt
@@ -372,11 +372,10 @@ BlasDouble::mmult
 } \\
 \hline
 \end{tabular}
-\label{sliceAssignment}
 \caption[Assignment with array slice set]{Table shows VRIR with array slicing on the LHS and the equivalent C++ code that is generated.}
+\label{tab:memAssignment}
 \end{table}
-
-One of the contributions of the thesis was an optimisation where redundant memory allocations during operations on arrays are removed. This optimisation is implemented by passing the array to which the result is assigned to, as a parameter to the function implementing the array operation. This array is the left hand side expression of the assignment statement whereas the right hand side expression is the function call. More information on the optimisation can be found in section \ref{sec:memoptimise}. 
+One of the contributions of the thesis was an optimisation where redundant memory allocations during operations on arrays are removed. This optimisation is implemented by passing the array to which the result is assigned to, as a parameter to the function implementing the array operation. This array is the left hand side expression of the assignment statement whereas the right hand side expression is the function call. More information on the optimisation can be found in section \ref{sec:memoptimise}. Table \ref{tab:memAssignment} gives an example of a VRIR representation which can potentially be optimised and the generated C++ code. 
 \subsection{For Statement}
 \subsection{Return Statement}
 \subsection{Break Statement}

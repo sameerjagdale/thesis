@@ -440,7 +440,89 @@ rn = var_spqr1.ret_data3;
 \label{tab:multAssignment}
 \end{table}
 Assignment statements can have multiple expressions on the LHS when the RHS expression is a function call with multiple returns. As mentioned in section \ref{sec:functions}, functions with multiple returns are handled by returning a struct containing the return values. In the assignment statement the expression on the LHS are replaced by a struct variable and additional code is generated to assign the values in the struct to the LHS expressions. Table \ref{tab:multAssignment} shows the C++ code that is generated from VRIR.
+
 \subsection{For Statement}
+\begin{table}[htbp]
+\begin{tabular}{|c|c|}
+\hline 
+VRIR & C++ backend \\
+\hline 
+{
+\begin{lstlisting}[language=lisp, frame=none, numbers=none]
+(forstmt
+	(itervars
+		(sym :id 7)
+	)
+	(loopdomain
+		( domain 
+			( domaintype :ndims 1 
+				(int64 :ctype 0)
+			)
+			(range :exclude %0
+				(start
+					(realconst :ival 1
+						(int64 :ctype 0)
+					)
+				)
+				(stop
+					(name :id 3
+						(float64 :ctype 0)
+					)
+				)
+			)
+		)
+	)
+	(body
+		<Loop Body>
+	)
+)
+
+\end{lstlisting}
+} & 
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+for(h=1;h<= k;h=h+static_cast<long>(1)) {
+	<Loop Body>
+}
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[For Statement]{The table shows a for statement node in VRIR and its equivalent C++ code}
+\label{tab:forStmt}
+\end{table}
+The For statement node in VRIR is compiled to a for loop is C++. The domain node of the for statement is used to determine the ranges over which the for loop iterates. If there are multiple ranges in the domain node, the for statement node is compiled into multiple nested loops. The names of the loop variables is determined by fetching their IDs from the itervar node and using their IDs to look up their names in the symbol table. An example of the generated in given in table \ref{tab:forStmt}
+\begin{table}[htbp]
+\begin{tabular}{|l|l|}
+\hline
+
+For loop excluding stop value & 
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+for(h=1; h< k; h=h+static_cast<long>(1)) {
+	<Loop Body>
+}
+\end{lstlisting}
+}
+ \\
+\hline 
+
+For loop including stop value & 
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+for(h=1; h<= k; h=h+static_cast<long>(1)) {
+	<Loop Body>
+}
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[Use of exclude flag in For statement]{Table shows a C++ for loop with the exclude flag set to 0 and 1.}
+\label{tab:excludeFor}
+\end{table}
+\subsubsection{Determining inclusion of the Stop expression}
+The loop domain node of the for statement gives the start, stop and step expressions for each range. These expressions are used to generate the initialisation, condition and increment statements of the C++ for loop. We have to determine whether the range is  inclusive of the stop value.  This is done using the exclude flag of the range expression. If the flag is set to `\%1', the value is excluded whereas it is included if the flag is set to `\%0'. In case of an excluded stop value, the `<' operator is used in the condition statement and the `<=' operator is used in case of an included stop value. Table \ref{tab:excludeFor} gives an example the generated for loops with and without including the stop value.
+\subsubsection{Determining loop direction}
 \subsection{Return Statement}
 \subsection{Break Statement}
 \subsection{If Statement}

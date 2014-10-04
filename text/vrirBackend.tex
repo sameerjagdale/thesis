@@ -271,11 +271,12 @@ temp = VR_GET_DATA_F64(A)[(i - 1)];
 \label{tab:simpleAssignment}
 \end{table}
 \subsubsection{Assignment Statements with Array Slice set}
-				In assignment statements which fall under this category, the left hand side expression is an index expression with atleast one slice index. The right hand side can be any expression. The array slice set operation allows a region of the array to be assigned values. Since C++ does not support this, we have provide a function in the runtime library which implements this. During code generation, the assignment statement is compiled to the function callimplementing array slice set. The parameters to this call are the array variable of index expression on the left hand side, the right hand side expression and the set of indices which define the region of the array to which the values have to be assigned to. The indices are converted to VrIndex structs. More information to VrIndex can be found sub-section \ref{subsec:vrindex}.
+In assignment statements which fall under this category, the left hand side expression is an index expression with atleast one slice index. The right hand side can be any expression. The array slice set operation allows a region of the array to be assigned values. Since C++ does not support this, we have provide a function in the runtime library which implements this. During code generation, the assignment statement is compiled to the function callimplementing array slice set. The parameters to this call are the array variable of index expression on the left hand side, the right hand side expression and the set of indices which define the region of the array to which the values have to be assigned to. The indices are converted to VrIndex structs. More information to VrIndex can be found sub-section \ref{subsec:vrindex}.
 \begin{table}[htbp]
 \begin{tabular}{|l|l|}
+\hline \\
 {
-\begin{lstlisting}
+\begin{lstlisting}[language=lisp, frame=none]
 (assignstmt
 	(lhs
 		(index :arrayid 12 :copyslice %0 
@@ -311,11 +312,16 @@ temp = VR_GET_DATA_F64(A)[(i - 1)];
 \end{lstlisting}
 } & 
 {
-		\begin{lstlisting}
-rrk.setArraySliceSpec(<RHS Expression>, VrIndex((k + 1),n,1));
+\begin{lstlisting}[language=c,frame=none]
+rrk.setArraySliceSpec
+	(<RHS Expression>, 
+	VrIndex((k + 1),n,1));
 		\end{lstlisting}
-}
+} \\
+\hline
 \end{tabular}
+\label{sliceAssignment}
+\caption[Assignment with array slice set]{Table shows VRIR with array slicing on the LHS and the equivalent C++ code that is generated.}
 \end{table}
 \subsection{For Statement}
 \subsection{Return Statement}

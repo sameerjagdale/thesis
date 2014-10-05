@@ -491,7 +491,7 @@ for(h=1;h<= k;h=h+static_cast<long>(1)) {
 \caption[For Statement]{The table shows a for statement node in VRIR and its equivalent C++ code}
 \label{tab:forStmt}
 \end{table}
-The For statement node in VRIR is compiled to a for loop is C++. The domain node of the for statement is used to determine the ranges over which the for loop iterates. If there are multiple ranges in the domain node, the for statement node is compiled into multiple nested loops. The names of the loop variables is determined by fetching their IDs from the itervar node and using their IDs to look up their names in the symbol table. An example of the generated in given in table \ref{tab:forStmt}
+The For statement node in VRIR is compiled to a for loop is C++. The domain node of the for statement is used to determine the ranges over which the for loop iterates. If there are multiple ranges in the domain node, the for statement node is compiled into multiple nested loops. The names of the loop variables is determined by fetching their IDs from the itervar node and using their IDs to look up their names in the symbol table. An example of the generated in given in table \ref{tab:forStmt}. The table 
 \begin{table}[htbp]
 \begin{tabular}{|l|l|}
 \hline
@@ -521,8 +521,25 @@ for(h=1; h<= k; h=h+static_cast<long>(1)) {
 \label{tab:excludeFor}
 \end{table}
 \subsubsection{Determining inclusion of the Stop expression}
-The loop domain node of the for statement gives the start, stop and step expressions for each range. These expressions are used to generate the initialisation, condition and increment statements of the C++ for loop. We have to determine whether the range is  inclusive of the stop value.  This is done using the exclude flag of the range expression. If the flag is set to `\%1', the value is excluded whereas it is included if the flag is set to `\%0'. In case of an excluded stop value, the `<' operator is used in the condition statement and the `<=' operator is used in case of an included stop value. Table \ref{tab:excludeFor} gives an example the generated for loops with and without including the stop value.
+The loop domain node of the for statement gives the start, stop and step expressions for each range. These expressions are used to generate the initialisation, condition and increment statements of the C++ for loop. We have to determine whether the range is  inclusive of the stop value.  This is done using the exclude flag of the range expression. If the flag is set to `\%1', the value is excluded whereas it is included if the flag is set to `\%0'. In case of an excluded stop value, the `<' or the `>' operator is used in the condition statement and the `<=' or the `>=' operator is used in case of an included stop value. Table \ref{tab:excludeFor} gives an example the generated for loops with and without including the stop value.
 \subsubsection{Determining loop direction}
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+Start and Stop values & Step Value & Loop Direction \\ \hline
+\multirow{2}{*}{Stop  \textgreater  Start} & Negative & Empty Loop \\ \cline{2-3} 
+ & Positive & Increment \\ \hline
+\multirow{2}{*}{Stop \textless Start} & Negative & Decrement \\ \cline{2-3} 
+ & Positive & Empty Loop \\ \hline
+\end{tabular}
+\caption[Loop Direction]{Table shows the direction of a for loop for various start, stop and step values}
+\label{tab:loopDirection}
+\end{table}
+While generating code for the for statement, the direction of the loop can be determined by the start, stop and step values. Table \ref{tab:loopDirection} shows the directions of a for loop for different values of start,stop and step. The loop direction can only be determined if the value of the step value is known during compilation. In order to determine the loop direction we check whether the step expression is  a constant expression or a negate expression with a constant expression as its child.
+\subsubsection{ Generating the loop vector}
+If the direction of the loop cannot be determined at compile time, we add declare a vector in the generate code. All possible of the loop variable will be inserted into the vector at run time. The generated loop iterates over the vector and the loop variable is assigned consecutive values of the vector inside the loop body. 
+% TODO:add example
 \subsection{Return Statement}
 \subsection{Break Statement}
 \subsection{If Statement}

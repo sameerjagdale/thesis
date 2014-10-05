@@ -541,9 +541,173 @@ While generating code for the for statement, the direction of the loop can be de
 If the direction of the loop cannot be determined at compile time, we add declare a vector in the generate code. All possible of the loop variable will be inserted into the vector at run time. The generated loop iterates over the vector and the loop variable is assigned consecutive values of the vector inside the loop body. 
 % TODO:add example
 \subsection{Return Statement}
-\subsection{Break Statement}
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+VRIR &  Generated C++ \\
+\hline
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+(returnstmt
+	(exprs
+		(name :id 7
+			(float64 :ctype 0)
+		)
+	)
+)
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+return cap;
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[Simple return statement]{The table shows a return statement with a single return value and its equivalent C++}
+\label{tab:simpleReturn}
+\end{table}
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+VRIR &  Generated C++ \\
+\hline
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+(returnstmt
+  (exprs
+    (name :id 3
+      (float64 :ctype 0)
+    )
+    (name :id 4
+      ( arraytype :layout colmajor :ndims 2
+        (float64 :ctype 0)
+      )
+    )
+    (name :id 5
+      ( arraytype :layout colmajor :ndims 2
+        (float64 :ctype 0)
+      )
+    )
+    (name :id 6
+      ( arraytype :layout colmajor :ndims 2
+        (float64 :ctype 0)
+      )
+    )
+  )
+)
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+return struct_spqr_ret
+          (ncols,R,colx,norms);
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[Simple return statement]{The table shows a return statement with a single return value and its equivalent C++}
+\label{tab:multiReturn}
+\end{table}
+For return statements with single return variable, a simple return statement is generated. The expressions inside the return statement are replaced with their Ids inside the symbol table. If the expressions are not name expressions, they are assigned to a temporary variables which are then returned. Table \ref{tab:simpleReturn} gives an example of a simple return statement.
+Since C++ does not support return statements with multiple variables, we return a struct instead. The values of the variables are passed as parameters to the struct's constructor. Table \ref{tab:multiReturn} gives an example of the return statement with multiple returns values.
 \subsection{If Statement}
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+VRIR &  Generated C++ \\
+\hline
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+(ifstmt
+	(test
+		<Test Condition>
+	)
+	(if
+		<If Block>
+	)	
+	( else 
+		<Else block>
+	)
+)
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+ if(Test condition) { 
+	<If Block>
+
+ } else {
+
+	<Else Block>
+ }
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[If Statement Example]{The table shows an example of a if statement in VRIR and its equivalent C++ code.}
+\label{tab:ifStmt}
+\end{table}
+The if statement is compiled to a condition statement, an if block and an else block if it exists.  Table \ref{tab:ifStmt} gives an example of the if statement.
+\subsection{Break Statement}
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+VRIR &  Generated C++ \\
+\hline
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+(break)
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+break;
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[Break statement example]{The table shows an example of a break statement in VRIR and its equivalent C++ break statement}
+\label{tab:breakStmt}
+\end{table}
+The break statement of VRIR is compiled to the break statement in C++. Table \ref{tab:breakStmt} gives an example of the break statement.
 \subsection{Continue Statement}
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+VRIR &  Generated C++ \\
+\hline
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+(continue)
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+continue;
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[Continue statement example]{The table shows an example of a continue statement in VRIR and its equivalent C++ break statement}
+\label{tab:continueStmt}
+\end{table}
+The continue statement of VRIR is compiled to the continue statement in C++. Table \ref{tab:continueStmt} gives an example of the continue statement.
 \subsection{While Statement}
 \subsection{Parallel For Statement}
 \subsection{Statement List}

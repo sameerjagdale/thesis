@@ -174,56 +174,6 @@ typedef struct struct_adapt_ret {
 struct_adapt_ret adapt(double a,double b,double sz_guess,double tol);
 \end{lstlisting}
 C++ only permits single return types. On the other hand, VRIR supports multiple return types. In order to bridge this difference in semantics, we generate a struct definition whose fields are of the same types as the return types. A parameterized constructor is also provided to assign the different variables that need to be returned to the member fields of the struct. The structure definition and the function definition that returns the structure is shown in listing \ref{lst:multReturn}. The struct name is generated using the name of the function. The format of a struct for multiple returns is, struct\_<function name>\_ret. This allows the calling function to determine the name of the struct while declaring a variable. 
-\section{Operators}
-\label{sec:operators}
-			\begin{table}[htbp]
-					\centering
-					\begin{tabular}{|c|c|}
-					\hline
-					VRIR operators & C++ Operators \\ \hline
-					plus           & +             \\ \hline
-					minus          & -             \\ \hline
-					mult           & *             \\ \hline
-					div            & /             \\ \hline
-					and            & \&\&           \\ \hline
-					or             & ||            \\ \hline
-					lt             & \textless     \\ \hline
-					leq            & \textless=    \\ \hline
-					gt             & \textgreater  \\ \hline
-					geq            & \textgreater= \\ \hline
-					eq             & ==            \\ \hline
-					neq            & !=            \\ \hline
-					\end{tabular}
-					\caption[opMap]{VRIR operators to C++ operators Mapping. The table shows the C++ operators to which the VRIR operators are mapped.}
-					\label{tab:opMap}
-					\end{table}
-					\begin{table}[htbp]
-					\centering
-					\begin{tabular}{|c|c|c|c|}
-					\hline
-					VRIR Lib Call                               & Operand 1 & Operand 2 & C++ function \\ \hline
-					\multirow{2}{*}{Matrix Multiplication}      & Array     & Array     & mmult        \\ \cline{2-4} 
-					& Array     & Scalar    & scal\_mult   \\ \hline
-					\multirow{2}{*}{Elementwise Multiplication} & Array     & Array     & vec\_mult    \\ \cline{2-4} 
-					& Array     & Scalar    & scal\_mult   \\ \hline
-					\multirow{2}{*}{Matrix Left Division}       & Array     & Array     & mat\_ldiv    \\ \cline{2-4} 
-					& Array     & Scalar    & scal\_div    \\ \hline
-					\multirow{2}{*}{Matrix Right Division}      & Array     & Array     & mat\_rdiv    \\ \cline{2-4} 
-					& Array     & Scalar    & scal\_div    \\ \hline
-					\multirow{2}{*}{Elementwise Division}       & Array     & Array     & elem\_div    \\ \cline{2-4} 
-					& Array     & Scalar    & scal\_div    \\ \hline
-					\multirow{2}{*}{Array Addition}             & Array     & Array     & vec\_add     \\ \cline{2-4} 
-					& Array     & Scalar    & scal\_add    \\ \hline
-					\multirow{2}{*}{Array Subtraction}          & Array     & Array     & vec\_sub     \\ \cline{2-4} 
-					& Array     & Scalar    & scal\_minus  \\ \hline
-					Array Copy                                  & Array     & Array     & vec\_copy    \\ \hline
-					Matrix Transpose                            & Array     & -         & transpose    \\ \hline
-					\end{tabular}
-					\caption[List of operations on Arrays]{The table shows the different C++ functions array operators are mapped to. }
-					\label{tab:arrayOpMap}
-					\end{table}
-Arithemetic operators in VRIR, such as plus, minus, mult, div can only have scalar operands. Hence generating C++ code these operators in straightforward. They are mapped to the operators internally supported by C++. Thus plus is mapped to the `+' operator in C++, minus is mapped to `-'. The complete list is given in table \ref{tab:opMap}. \\
-					Operations on arrays, on the other hand, are mapped to the LibCall expression in VRIR. Since C++ does not have internal operators for arrays we implemented function to support these operations on arrays. These functions are housed inside the language-specific runtime library. Where ever possible these functions made calls to BLAS functions for enchanced performance. In case of the \matlab\cite{matlab} runtime, we use the Intel Math Kernel Library\cite{mkl} or MKL implementation of BLAS and in case of Python\cite{python}, we use the openBLAS\cite{openblas} implementation.
 \section{Statements}
 VRIR supports various statements such as assignments, for-loops, while-loops etc. Most of the statements are directly supported in C++. The assignment, for and return statements have special cases which need to be supported. VRIR also supports the parallel for statement. This statement is compiled to an equivalent for loop with OpenMP pragmas in C++.
 \subsection{Assignment Statement}
@@ -682,7 +632,7 @@ break;
 \caption[Break statement example]{The table shows an example of a break statement in VRIR and its equivalent C++ break statement}
 \label{tab:breakStmt}
 \end{table}
-The break statement of VRIR is compiled to the break statement in C++. Table \ref{tab:breakStmt} gives an example of the break statement.
+The break statement of VRIR is compiled to the break statement in C++. Table \ref{tab:breakStmt} gives an example of the continue statement.
 \subsection{Continue Statement}
 \begin{table}[htbp]
 \centering
@@ -704,14 +654,95 @@ continue;
 } \\
 \hline
 \end{tabular}
-\caption[Continue statement example]{The table shows an example of a continue statement in VRIR and its equivalent C++ break statement}
+\caption[While statement example]{The table shows an example of a while statement in VRIR and its equivalent C++ while statement}
 \label{tab:continueStmt}
 \end{table}
 The continue statement of VRIR is compiled to the continue statement in C++. Table \ref{tab:continueStmt} gives an example of the continue statement.
 \subsection{While Statement}
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+VRIR &  Generated C++ \\
+\hline
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+(while 
+	(test <While Condition>)
+	(body 
+		<Loop Body>
+	)
+)
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+while(condition) {
+	<Loop Body>
+}
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[While statement example]{The table shows an example of a while statement in VRIR and its equivalent C++ while loop}
+\label{tab:continueStmt}
+\end{table}
+The while statement is compiled to a while loop in C++. The test node of the statement is used to generate the while condition. Statements inside the body node are compiled to the statements inside the loop body.
 \subsection{Parallel For Statement}
 \subsection{Statement List}
 \section{Expressions}
+\subsection{Operators}
+\label{sec:operators}
+			\begin{table}[htbp]
+					\centering
+					\begin{tabular}{|c|c|}
+					\hline
+					VRIR operators & C++ Operators \\ \hline
+					plus           & +             \\ \hline
+					minus          & -             \\ \hline
+					mult           & *             \\ \hline
+					div            & /             \\ \hline
+					and            & \&\&           \\ \hline
+					or             & ||            \\ \hline
+					lt             & \textless     \\ \hline
+					leq            & \textless=    \\ \hline
+					gt             & \textgreater  \\ \hline
+					geq            & \textgreater= \\ \hline
+					eq             & ==            \\ \hline
+					neq            & !=            \\ \hline
+					\end{tabular}
+					\caption[opMap]{VRIR operators to C++ operators Mapping. The table shows the C++ operators to which the VRIR operators are mapped.}
+					\label{tab:opMap}
+					\end{table}
+					\begin{table}[htbp]
+					\centering
+					\begin{tabular}{|c|c|c|c|}
+					\hline
+					VRIR Lib Call                               & Operand 1 & Operand 2 & C++ function \\ \hline
+					\multirow{2}{*}{Matrix Multiplication}      & Array     & Array     & mmult        \\ \cline{2-4} 
+					& Array     & Scalar    & scal\_mult   \\ \hline
+					\multirow{2}{*}{Elementwise Multiplication} & Array     & Array     & vec\_mult    \\ \cline{2-4} 
+					& Array     & Scalar    & scal\_mult   \\ \hline
+					\multirow{2}{*}{Matrix Left Division}       & Array     & Array     & mat\_ldiv    \\ \cline{2-4} 
+					& Array     & Scalar    & scal\_div    \\ \hline
+					\multirow{2}{*}{Matrix Right Division}      & Array     & Array     & mat\_rdiv    \\ \cline{2-4} 
+					& Array     & Scalar    & scal\_div    \\ \hline
+					\multirow{2}{*}{Elementwise Division}       & Array     & Array     & elem\_div    \\ \cline{2-4} 
+					& Array     & Scalar    & scal\_div    \\ \hline
+					\multirow{2}{*}{Array Addition}             & Array     & Array     & vec\_add     \\ \cline{2-4} 
+					& Array     & Scalar    & scal\_add    \\ \hline
+					\multirow{2}{*}{Array Subtraction}          & Array     & Array     & vec\_sub     \\ \cline{2-4} 
+					& Array     & Scalar    & scal\_minus  \\ \hline
+					Array Copy                                  & Array     & Array     & vec\_copy    \\ \hline
+					Matrix Transpose                            & Array     & -         & transpose    \\ \hline
+					\end{tabular}
+					\caption[List of operations on Arrays]{The table shows the different C++ functions array operators are mapped to. }
+					\label{tab:arrayOpMap}
+					\end{table}
+Arithemetic operators in VRIR, such as plus, minus, mult, div can only have scalar operands. Hence generating C++ code these operators in straightforward. They are mapped to the operators internally supported by C++. Thus plus is mapped to the `+' operator in C++, minus is mapped to `-'. The complete list is given in table \ref{tab:opMap}. \\
+					Operations on arrays, on the other hand, are mapped to the LibCall expression in VRIR. Since C++ does not have internal operators for arrays we implemented function to support these operations on arrays. These functions are housed inside the language-specific runtime library. Where ever possible these functions made calls to BLAS functions for enchanced performance. In case of the \matlab\cite{matlab} runtime, we use the Intel Math Kernel Library\cite{mkl} or MKL implementation of BLAS and in case of Python\cite{python}, we use the openBLAS\cite{openblas} implementation.
 \section{Basic Indexing}
 \label{sec:indexing}
 \subsection{ Generating a single index value from multiple indices}

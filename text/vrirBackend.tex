@@ -691,10 +691,60 @@ while(condition) {
 \end{table}
 The while statement is compiled to a while loop in C++. The test node of the statement is used to generate the while condition. Statements inside the body node are compiled to the statements inside the loop body.
 \subsection{Parallel For Statement}
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+VRIR &  Generated C++ \\
+\hline
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+( pfor
+	(itervars 
+		(sym :id 6 
+		)
+	)
+	(loopdomain 
+	  ( domain ( domaintype :ndims 1 (int64 :ctype 0))
+		(range :exclude %0 
+   			(start  
+   				(realconst :ival 1
+					(int64 :ctype 0)
+				)
+			)
+			(stop  
+   				(name :id 4 
+					(float64 :ctype 0)
+				)
+			)
+		)
+	   )
+	)
+	(shared  3 4 5 )
+)
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+#pragma omp parallel for shared(A,B,c)
+ for( i = 0; i < static_cast<long>(m); i++) {
+	<Loop Body>
+ }
+
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[While statement example]{The table shows an example of a while statement in VRIR and its equivalent C++ while loop}
+\label{tab:continueStmt}
+\end{table}
+A parallel for loop is compiled to a for loop  in C++ with an openMP pragma inserted before the loop. The shared variables node of the parallel for statement contains IDs of the variables that are shared and are added to the shared option of OpenMP.
 \subsection{Statement List}
 \section{Expressions}
 \subsection{Operators}
-\label{sec:operators}
+\label{subsec:operators}
 			\begin{table}[htbp]
 					\centering
 					\begin{tabular}{|c|c|}

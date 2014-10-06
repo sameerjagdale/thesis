@@ -728,8 +728,11 @@ VRIR &  Generated C++ \\
 &
 {
 \begin{lstlisting}[language=c,frame=none, numbers=none]
-#pragma omp parallel for shared(A,B,c)
- for( i = 0; i < static_cast<long>(m); i++) {
+#pragma omp parallel for  \
+	shared(A,B,c)
+ for( i = 0; 
+		i < static_cast<long>(m);
+		i++) {
 	<Loop Body>
  }
 
@@ -737,11 +740,12 @@ VRIR &  Generated C++ \\
 } \\
 \hline
 \end{tabular}
-\caption[While statement example]{The table shows an example of a while statement in VRIR and its equivalent C++ while loop}
-\label{tab:continueStmt}
+\caption[Parallel For example]{The table shows an example of a parallel for statement in VRIR and its equivalent C++ for loop with OpenMP}
+\label{tab:pForStmt}
 \end{table}
-A parallel for loop is compiled to a for loop  in C++ with an openMP pragma inserted before the loop. The shared variables node of the parallel for statement contains IDs of the variables that are shared and are added to the shared option of OpenMP.
+A parallel for loop is compiled to a for loop  in C++ with an openMP pragma inserted before the loop. The shared variables node of the parallel for statement contains IDs of the variables that are shared and are added to the shared option of OpenMP. Table \ref{tab:pForStmt} gives an example of the parallel for statement.
 \subsection{Statement List}
+A statement list is used to define multiple statements and is often a child node of the If, For and While statements as well as the Function node.
 \section{Expressions}
 \subsection{Operators}
 \label{subsec:operators}

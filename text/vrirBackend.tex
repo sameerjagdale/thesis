@@ -747,6 +747,7 @@ A parallel for loop is compiled to a for loop  in C++ with an openMP pragma inse
 \subsection{Statement List}
 A statement list is used to define multiple statements and is often a child node of the If, For and While statements as well as the Function node.
 \section{Expressions}
+Most expressions VRIR can be compiled to equivalent expressions in C++. Expressions such as index expressions have special cases which need to be considered. The following subsections explain the compilation of the VRIR different expressions.
 \subsection{Operators}
 \label{subsec:operators}
 			\begin{table}[htbp]
@@ -795,7 +796,7 @@ A statement list is used to define multiple statements and is often a child node
 					\caption[List of operations on Arrays]{The table shows the different C++ functions array operators are mapped to. }
 					\label{tab:arrayOpMap}
 					\end{table}
-Arithemetic operators in VRIR, such as plus, minus, mult, div can only have scalar operands. Hence generating C++ code these operators in straightforward. They are mapped to the operators internally supported by C++. Thus plus is mapped to the `+' operator in C++, minus is mapped to `-'. The complete list is given in table \ref{tab:opMap}. \\
+Different binary and unary expressions in VRIR can be classified as arithemetic operators.These include binary expressions such as  plus, minus, mult, div and the negate expression. These expressions can only have scalar operands. Hence generating C++ code these operators in straightforward. They are mapped to the operators internally supported by C++. Thus plus is mapped to the `+' operator in C++, minus is mapped to `-'. The complete list is given in table \ref{tab:opMap}. \\
 					Operations on arrays, on the other hand, are mapped to the LibCall expression in VRIR. Since C++ does not have internal operators for arrays we implemented function to support these operations on arrays. These functions are housed inside the language-specific runtime library. Where ever possible these functions made calls to BLAS functions for enchanced performance. In case of the \matlab\cite{matlab} runtime, we use the Intel Math Kernel Library\cite{mkl} or MKL implementation of BLAS and in case of Python\cite{python}, we use the openBLAS\cite{openblas} implementation.
 \section{Basic Indexing}
 \label{sec:indexing}

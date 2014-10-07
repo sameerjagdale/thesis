@@ -1,4 +1,4 @@
-An important contribution of the thesis is the static generation of C++ code from VRIR. Due to differences in the semantics of VRIR and C++, we faced various challenges during code generation. As described in \chapref{chap:Background}, VRIR is a high level strongly typed AST designed to support easy compilation of a wide range of Array based languages. Hence, it supports different indexing schemes such as 0-indexing, 1-indexing and negative indexing as well as different array layout schemes such as row-major and column-major. C++ on the other hand does not have an built in support for arrays, and only supports 0-indexing and a row major layout. Moreover, VRIR also supports multiple returns. On the other hand, we can only return a single value, which can be a scalar, class, struct or a pointer, in C++. This chapter describes how different nodes in VRIR are mapped to C++ constructs including those which C++ does not implicitly support.
+An important contribution of the thesis is the static generation of C++ code from VRIR. Due to differences in the semantics of VRIR and C++, we faced various challenges during code generation. As described in \chapref{chap:Background}, VRIR is a high level strongly typed AST designed to support easy compilation of a wide range of array-based languages. Hence, it supports different indexing schemes such as 0-indexing, 1-indexing and negative indexing as well as different array layout schemes such as row-major and column-major. C++ on the other hand does not have an built in support for arrays, and only supports 0-indexing and a row major layout. Moreover, VRIR also supports multiple returns. On the other hand, we can only return a single value, which can be a scalar, class, struct or a pointer, in C++. This chapter describes how different nodes in VRIR are mapped to C++ constructs including those which C++ does not implicitly support.
 \section{Mapping Types}
 Data types in VRIR, known as VTypes, can be categorised into 5 types :
 \subsection{Scalar Type}
@@ -60,7 +60,7 @@ VrArrayB     & bool            \\ \hline
 \caption[Data field types of different VrArrays]{Data field types of different VrArrays. Table depicting the types of the data field for different VrArray types.}
 \label{tab:arrayDataMap}
 \end{table}
-Unlike array-based languages, C++ arrays do not store additional information such as the number of dimensions or the sizes of each dimensions. This information is useful while performing various operations such as multiplication, addition etc and hence it was necessary for us to store it. One solution was to take store this information separately. However, this approach increases the number of parameters that need to be passed to functions implementing array operations. Moreover, when assigning to an array additional code that needs to be generated to update the dimension sizes and the number of dimensions. Hence, we implemented structs for arrays of all the data types supported by VRIR. We call the structs collectively as VrArrays. The equivalent VrArray types for different array types are shown in table \ref{tab:arrayTypeMap}.
+Unlike array-based languages, C++ arrays do not store additional information such as the number of dimensions or the sizes of each dimensions. This information is useful while performing various operations such as multiplication, addition etc and hence it was necessary for us to store it. One solution was to store this information separately. However, this approach increases the number of parameters that need to be passed to functions implementing array operations. Moreover, when assigning to an array additional code that needs to be generated to update the dimension sizes and the number of dimensions. Hence, we implemented structs for arrays of all the data types supported by VRIR. We call the structs collectively as VrArrays. The equivalent VrArrays for different array types are shown in table \ref{tab:arrayTypeMap}.
 \subsubsection{VrArrays}
 VrArrays are represented as C++ structs and encapsulate array data as well as the meta-data. They contain a pointer to the data as well as other necessary information such as the number of dimensions and the size of each dimension. There are different VrArrays for different data types. The different VrArray types and the VRIR types from which they are mapped are given in table \ref{tab:arrayTypeMap}. The structure of the different VrArrays in given below. Each VrArray has a data field which is a pointer to the array data. The type of the data field depends on the type of the VrArray. For example, the type of VrArrayF64, which is used to represent an float64 array is double. 
 There are separate VrArray types for complex and real arrays of the same type. All operations on arrays in the language runtime take VrArrays as input. This allows single parameter to be passed for array instead of passing the data, dimensions and number of dimensions separately. The full list of VrArrays and the types of their corresponding data fields is given in table \ref{tab:arrayDataMap}.
@@ -120,7 +120,7 @@ Void Type & Generated Void \\ \hline
 \end{table}
 The void type is used in most cases inside a Func Type to convey the absence of either input or output parameters. The void type is mapped to a simple `void' in C++. Table \ref{tab:voidTypeMap} shows the mapping
 \subsection{Tuple Type}
-Tuple types are used to define data structures which can have data of different types. While generating C++ code, the tuple types are used to generate structs that are in turn used to support data structures containing heteregenous data.
+Tuple types are used to define data structures which can have data of different types. While generating C++ code, the tuple types are used to generate structs that are in turn used to support data structures containing heterogenous data.
 \subsection{Func Type}
 Func types are associated with function definitions and function handles. They contain information about the types of the input and out parameters of the function. The function types are used for generating function definition. More information about how function definitions are generated in given in section \ref{sec:functions}.
 \section{Modules}
@@ -177,9 +177,6 @@ C++ only permits single return types. On the other hand, VRIR supports multiple 
 \section{Statements}
 VRIR supports various statements such as assignments, for-loops, while-loops etc. Most of the statements are directly supported in C++. The assignment, for and return statements have special cases which need to be supported. VRIR also supports the parallel for statement. This statement is compiled to an equivalent for loop with OpenMP pragmas in C++.
 \subsection{Assignment Statement}
-While generating C++ code for the assignment statement, we had to take into account different variations of the statement as well generate additional code. Different variations include statements with an array slice operation on the left hand side, statements containing function calls on the right hand side which have multiple returns etc. 
-\subsubsection{Simple Assignment Statements}
-Simple assignment statements are used when the left hand side is a name expression or an index expression without the array slice operator. The number of expressions on the left hand side can not be more than one. An example of a simple assignment statement is given in table \ref{tab:simpleAssignment}.
 	\begin{table}[htbp]
 	\begin{tabular}{|l|l|}
 					\hline
@@ -220,7 +217,7 @@ temp = VR_GET_DATA_F64(A)[(i - 1)];
 \caption[Simple Assignment Statement]{ The table shows an example of the simple assignment statement in VRIR and the equivalent C++ code that is generated from it.}
 \label{tab:simpleAssignment}
 \end{table}
-\subsubsection{Assignment Statements with Array Slice set}
+
 \begin{table}[htbp]
 \begin{tabular}{|c|c|}
 \hline
@@ -260,6 +257,7 @@ VRIR & C++ backend \\
 	(rhs
 		<RHS Expression>)
 	)
+)
 \end{lstlisting}
 } & 
 {
@@ -274,8 +272,7 @@ rrk.setArraySliceSpec
 \caption[Assignment with array slice set]{Table shows VRIR with array slicing on the LHS and the equivalent C++ code that is generated.}
 \label{tab:sliceAssign}
 \end{table}
-In assignment statements which fall under this category, the left hand side expression is an index expression with atleast one slice index. The right hand side can be any expression. The array slice set operation allows a region of the array to be assigned values. Since C++ does not support this, we have provide a function in the runtime library which implements this. During code generation, the assignment statement is compiled to the function callimplementing array slice set. The parameters to this call are the array variable of index expression on the left hand side, the right hand side expression and the set of indices which define the region of the array to which the values have to be assigned to. The indices are converted to VrIndex structs. More information to VrIndex can be found sub-section \ref{subsubsec:vrindex}. Table \ref{tab:sliceAssign} shows a VRIR representation with a slice operation on the left hand side and the equivalent C++ code that is generated.
-\subsubsection{Assignment statements that can be optimised  for redundant memory allocations}
+
 \begin{table}[htbp]
 \begin{tabular}{|c|c|}
 \hline 
@@ -325,9 +322,7 @@ BlasDouble::mmult
 \caption[Assignment with Memory optimisation]{Table shows VRIR with array operations on the LHS and the equivalent C++ code that is generated and optimised.}
 \label{tab:memAssignment}
 \end{table}
-One of the contributions of the thesis was an optimisation where redundant memory allocations during operations on arrays are removed. This optimisation is implemented by passing the array to which the result is assigned to, as a parameter to the function implementing the array operation. This array is the left hand side expression of the assignment statement whereas the right hand side expression is the function call. More information on the optimisation can be found in section \ref{sec:memoptimise}. Table \ref{tab:memAssignment} gives an example of a VRIR representation which can potentially be optimised and the generated C++ code. 
 
-\subsubsection{Assignment Statements with multiple LHS expressions}
 \begin{table}[htbp]
 \begin{tabular}{|c|c|}
 \hline 
@@ -377,7 +372,8 @@ VRIR & C++ backend \\
 } & 
 {
 \begin{lstlisting}[language=c,frame=none, numbers=none]
-struct_spqr_ret var_spqr1 = <rhsExpr> 
+struct_spqr_ret var_spqr1 = 
+		<rhsExpr> 
 nr = var_spqr1.ret_data0;
 S = var_spqr1.ret_data1;
 rx = var_spqr1.ret_data2;
@@ -389,7 +385,16 @@ rn = var_spqr1.ret_data3;
 \caption[Assignment with multiple LHS expressions]{Table shows VRIR with multiple expressions on the LHS and the equivalent C++ code that is generated.}
 \label{tab:multAssignment}
 \end{table}
-Assignment statements can have multiple expressions on the LHS when the RHS expression is a function call with multiple returns. As mentioned in section \ref{sec:functions}, functions with multiple returns are handled by returning a struct containing the return values. In the assignment statement the expression on the LHS are replaced by a struct variable and additional code is generated to assign the values in the struct to the LHS expressions. Table \ref{tab:multAssignment} shows the C++ code that is generated from VRIR.
+While generating C++ code for the assignment statement, we had to take into account different variations of the statement as well cases requiring generation of additional code. Different variations include statements with an array slice operation on the left hand side, statements containing function calls on the right hand side which have multiple returns etc. 
+\subsubsection{Simple Assignment Statements}
+Simple assignment statements are used when the left hand side is a name expression or an index expression without the array slice operator. The number of expressions on the left hand side can not be more than one. An example of a simple assignment statement is given in table \ref{tab:simpleAssignment}.
+\subsubsection{Assignment Statements with Array Slice set}
+In assignment statements which fall under this category, the left hand side expression is an index expression with atleast one slice index. More information about slice indices can be found in subsection \ref{subsec:advancedindexing}. The right hand side can be any expression. The array slice set operation allows a region of the array to be assigned values. Since C++ does not support array slicing, we have provide a function in the runtime library which implements it. During code generation, the assignment statement is compiled to the function implementing array slice set. The parameters to this call are the array variable of index expression on the left hand side, the right hand side expression and the set of indices which define the region of the array to which the values have to be assigned to. The indices are converted to VrIndex structs. More information to VrIndex can be found sub-section \ref{subsubsec:vrindex}. Table \ref{tab:sliceAssign} shows a VRIR representation with a slice operation on the left hand side and the equivalent C++ code that is generated.
+\subsubsection{Assignment statements that can be optimised  for redundant memory allocations}
+One of the contributions of the thesis was an optimisation where redundant memory allocations during operations on arrays are removed. This optimisation is implemented by passing the array to which the result is assigned to, as a parameter to the function implementing the array operation. This array is the left hand side expression of the assignment statement whereas the right hand side expression is the function call. More information on the optimisation can be found in section \ref{sec:memoptimise}. Table \ref{tab:memAssignment} gives an example of a VRIR representation which can potentially be optimised and the generated C++ code. 
+
+\subsubsection{Assignment Statements with multiple LHS expressions}
+Assignment statements can have multiple expressions on the LHS when the RHS expression call to a function  with multiple returns. As mentioned in section \ref{sec:functions}, functions with multiple returns are handled by returning a struct containing the return values. In the assignment statement the expression on the LHS are replaced by a struct variable and additional code is generated to assign the values in the struct to the LHS expressions. Table \ref{tab:multAssignment} shows the C++ code that is generated from VRIR.
 
 \subsection{For Statement}
 \begin{table}[htbp]
@@ -441,7 +446,7 @@ for(h=1;h<= k;h=h+static_cast<long>(1)) {
 \caption[For Statement]{The table shows a for statement node in VRIR and its equivalent C++ code}
 \label{tab:forStmt}
 \end{table}
-The For statement node in VRIR is compiled to a for loop is C++. The domain node of the for statement is used to determine the ranges over which the for loop iterates. If there are multiple ranges in the domain node, the for statement node is compiled into multiple nested loops. The names of the loop variables is determined by fetching their IDs from the itervar node and using their IDs to look up their names in the symbol table. An example of the generated in given in table \ref{tab:forStmt}. The table 
+The For statement node in VRIR is compiled to a for loop is C++. The domain expression node of the for statement is used to determine the ranges over which the for loop iterates. If there are multiple ranges in the domain node, the for statement node is compiled into multiple nested loops. The names of the loop variables is determined by fetching their IDs from the itervar node and using their IDs to look up their names in the symbol table. An example of the generated in given in table \ref{tab:forStmt}.
 \begin{table}[htbp]
 \begin{tabular}{|l|l|}
 \hline
@@ -470,7 +475,7 @@ for(h=1; h<= k; h=h+static_cast<long>(1)) {
 \caption[Use of exclude flag in For statement]{Table shows a C++ for loop with the exclude flag set to 0 and 1.}
 \label{tab:excludeFor}
 \end{table}
-\subsubsection{Determining inclusion of the Stop expression}
+\subsubsection{Determining inclusion of the Stop value}
 The loop domain node of the for statement gives the start, stop and step expressions for each range. These expressions are used to generate the initialisation, condition and increment statements of the C++ for loop. We have to determine whether the range is  inclusive of the stop value.  This is done using the exclude flag of the range expression. If the flag is set to `\%1', the value is excluded whereas it is included if the flag is set to `\%0'. In case of an excluded stop value, the `<' or the `>' operator is used in the condition statement and the `<=' or the `>=' operator is used in case of an included stop value. Table \ref{tab:excludeFor} gives an example the generated for loops with and without including the stop value.
 \subsubsection{Determining loop direction}
 \begin{table}[htbp]
@@ -986,6 +991,7 @@ Table \ref{tab:basicIndex} gives an example of an index expression and its equiv
 Languages such as Python support negative indices. The index refers to an offset from the end of the array dimension. Since C++ does not support negative indexing, replace the indexing scheme mentioned in subsection \ref{subsec:basicindexing} with a call to the function `getIndexVal'. Since it is difficult to determine at compile time if all the indices are non-negative, we make a pessimistic assumption that atleast of the indices will be negative and generate a function call if the negative flag in the index expression is set to 1.
 % add example.
 \subsection{Advanced Indexing}
+\label{subsec:advancedindexing}
 We define cases where the array indices are non-scalar as advanced indexing. The indices can either be arrays or ranges. The index expression is compiled to a function call which returns an appropriate value for the given input indices. The function takes as input, arguments of type VrIndex, a struct defined in the runtime library.
 \subsubsection{VrIndex}
 \label{subsubsec:vrindex}
@@ -1006,5 +1012,6 @@ struct VrIndex{
 \end{lstlisting}
 The VrIndex struct is shown in listing \ref{lst:vrIndexStruct}. The structure contains two boolean flags m\_isRange and m\_isArray to differentiate which are used to determine whether the index is a range or an array respectively. If both flags are set to false, the index is a constant value. The constant value is stored in the variable const\_val. The range is stored as an array of size 3. The elements of the array are the start, stop and step values, in order. The array value is store in the variable arr.
 \subsubsection{Array Slicing}
+\ref{subsubsec:slicing}
 \section{Symbol Table}
 \section{Run time library}

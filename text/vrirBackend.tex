@@ -801,8 +801,8 @@ Most expressions VRIR can be compiled to equivalent expressions in C++. Expressi
 					\caption[List of operations on Arrays]{The table shows the different C++ functions array operators are mapped to. }
 					\label{tab:arrayOpMap}
 					\end{table}
-Many binary and unary expressions in VRIR can be classified as arithemetic operators.These include binary expressions such as  plus, minus, mult, div and the negate expression. These expressions  only support scalar operands. Hence generating C++ code these operators is straightforward. They are mapped to the operators directly supported by C++. Thus plus is mapped to the `+' operator in C++, minus is mapped to `-'. The complete list is given in table \ref{tab:opMap}. \\
-Operations on arrays, on the other hand, are mapped to the LibCall expression in VRIR. Since C++ does not have internal operators for arrays we implemented function to support these operations on arrays. These functions are housed inside the language-specific runtime library. Where ever possible these functions made calls to BLAS functions for enchanced performance. In case of the \matlab runtime, we use the Intel Math Kernel Library\cite{mkl} or MKL implementation of BLAS and in case of Python, we use the openBLAS\cite{openblas} implementation.
+Many binary and unary expressions in VRIR can be classified as arithemetic operators. These include binary expressions such as  plus, minus, mult, div and the negate expression. These expressions  only support scalar operands. Hence generating C++ code these operators is straightforward. They are mapped to the operators directly supported by C++. Thus plus is mapped to the `+' operator in C++, minus is mapped to `-'. The complete list is given in table \ref{tab:opMap}. \\
+Operations on arrays, on the other hand, are mapped to the LibCall expression in VRIR. Since C++ does not support operators for arrays we implemented function to support these operations on arrays. These functions are housed inside the language-specific runtime library. Where ever possible these functions make calls to BLAS functions for enchanced performance. In case of the \matlab runtime, we use the Intel Math Kernel Library\cite{mkl} or MKL implementation of BLAS and in case of Python, we use the openBLAS\cite{openblas} implementation.
 \subsection{Name Expressions}
 \begin{table}[htbp]
 \centering
@@ -988,7 +988,7 @@ n_1 + N_1 \cdot (n_2 + N_2 \cdot (n_3 + N_3 \cdot (\cdots + N_{d-1} n_d)\cdots))
  where, $n_i$ is the $ i^{th}$ index and  $N_i$ is the $i^{th}$ dimension of the array. \\
 Table \ref{tab:basicIndex} gives an example of an index expression and its equivalent generated C++ code. The array layout is column major in the case of the example
 \subsubsection{Negative Indexing}
-Languages such as Python support negative indices. The index refers to an offset from the end of the array dimension. Since C++ does not support negative indexing, replace the indexing scheme mentioned in subsection \ref{subsec:basicindexing} with a call to the function `getIndexVal'. Since it is difficult to determine at compile time if all the indices are non-negative, we make a pessimistic assumption that atleast of the indices will be negative and generate a function call if the negative flag in the index expression is set to 1.
+Languages such as Python support negative indices. The index refers to an offset from the end of the array dimension. Since C++ does not support negative indexing, replace the indexing scheme mentioned in subsection \ref{subsec:basicindexing} with a call to the function `getIndexVal'. Since it is difficult to determine at compile time if all the indices are non-negative, we make a pessimistic assumption that atleast one of the indices will be negative and generate a function call if the negative flag in the index expression is set to 1.
 % add example.
 \subsection{Advanced Indexing}
 \label{subsec:advancedindexing}

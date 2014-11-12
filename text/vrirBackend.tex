@@ -64,7 +64,7 @@ Unlike array-based languages, C++ arrays do not store additional information suc
 \subsubsection{VrArrays}
 VrArrays are represented as C++ structs and encapsulate array data as well as the meta-data. They contain a pointer to the data as well as other necessary information such as the number of dimensions and the size of each dimension. There are different VrArrays for different data types. The different VrArray types and the VRIR types from which they are mapped are given in table \ref{tab:arrayTypeMap}. The structure of the different VrArrays in given below. Each VrArray has a data field which is a pointer to the array data. The type of the data field depends on the type of the VrArray. For example, the type of VrArrayF64, which is used to represent an float64 array is double. 
 There are separate VrArray types for complex and real arrays of the same type. All operations on arrays in the language runtime take VrArrays as input. This allows single parameter to be passed for array instead of passing the data, dimensions and number of dimensions separately. The full list of VrArrays and the types of their corresponding data fields is given in table \ref{tab:arrayDataMap}.
-\begin{lstlisting}[language=c, label={vrArrayF64Struct}, caption={Structures of VrArrays for real data}]
+\begin{lstlisting}[float,language=c, label={vrArrayF64Struct}, caption={Structures of VrArrays for real data}]
 typedef struct VrArrayF64{
   double *data;
   dim_type* dims;  
@@ -91,8 +91,7 @@ typedef struct VrArrayI64{
 
 \end{lstlisting}
 
-\begin{lstlisting}[language=c, label={vrArrayF64Struct}, caption={Structures of VrArrays for complex data}]
-
+\begin{lstlisting}[float,language=c, label={vrArrayF64Struct}, caption={Structures of VrArrays for complex data}]
 typedef struct VrArrayCF32{
   float complex *data;
   dim_type* dims;  
@@ -104,7 +103,6 @@ typedef struct VrArrayCF64{
   dim_type* dims;  
   int ndims;
 }VrArrayCF64;
-
 \end{lstlisting}
 
 \subsection{Void Type}
@@ -157,7 +155,7 @@ Functions in VRIR are compiled to separate functions in C++. The function node i
 \end{itemize}
 The table \ref{tab:funcTypeMap} depicts how a function node in VRIR is converted to a C++ function.
 \subsection{Return types in VRIR}
-\begin{lstlisting}[language=c,caption={Generated structure to handle multiple returns.},label={lst:multReturn}]
+\begin{lstlisting}[float,language=c,caption={Generated structure to handle multiple returns.},label={lst:multReturn}]
 //Structure definition
 typedef struct struct_adapt_ret { 
    VrArrayPtrF64 ret_data0;
@@ -173,7 +171,7 @@ typedef struct struct_adapt_ret {
 //Function declaration
 struct_adapt_ret adapt(double a,double b,double sz_guess,double tol);
 \end{lstlisting}
-C++ only permits single return types. On the other hand, VRIR supports multiple return types. In order to bridge this difference in semantics, we generate a struct definition whose fields are of the same types as the return types. A parameterized constructor is also provided to assign the different variables that need to be returned to the member fields of the struct. The structure definition and the function definition that returns the structure is shown in listing \ref{lst:multReturn}. The struct name is generated using the name of the function. The format of a struct for multiple returns is, struct\_<function name>\_ret. This allows the calling function to determine the name of the struct while declaring a variable. 
+C++ only permits single return types. On the other hand, VRIR supports multiple return types. In order to bridge this difference in semantics, we generate a struct definition whose fields are of the same types as the return types. A parameterized constructor is also provided to assign the different variables that need to be returned to the member fields of the struct. The structure definition and the function definition that returns the structure is shown in listing \ref{lst:multReturn}. The struct name is generated using the name of the function. The format of a struct for multiple returns is, struct\_<function name>\_ret. This allows the calling function to determine the name of the struct while declaring a variable. Listing \ref{lst:multReturn} gives a struct definition which has three fields, two for scalar doubles and one for a double array. The Struct also contains a constructor which takes the values of the three fields as input. The constructor is used in the return statement of the function with multiple returns.
 \section{Statements}
 VRIR supports various statements such as assignments, for-loops, while-loops etc. Most of the statements are directly supported in C++. The assignment, for and return statements have special cases which need to be supported. VRIR also supports the parallel for statement. This statement is compiled to an equivalent for loop with OpenMP pragmas in C++.
 \subsection{Assignment Statement}
@@ -386,8 +384,9 @@ rn = var_spqr1.ret_data3;
 \label{tab:multAssignment}
 \end{table}
 While generating C++ code for the assignment statement, we had to take into account different variations of the statement as well cases requiring generation of additional code. Different variations include statements with an array slice operation on the left hand side, statements containing function calls on the right hand side which have multiple returns etc. 
+
 \subsubsection{Simple Assignment Statements}
-Simple assignment statements are used when the left hand side is a name expression or an index expression without the array slice operator. The number of expressions on the left hand side can not be more than one. An example of a simple assignment statement is given in table \ref{tab:simpleAssignment}.
+Simple assignment statements are used when the left hand side is a name expression or an index expression without the array slice operator. The number of expressions on the left hand side can not be more than one. An example of a simple assignment statement is given in table \ref{tab:simpleAssignment}. The example contains an assignment to a scalar double variable temp. The right hand side is a simple index expression with a single index i. The index is subtracted by one because the array was originally one indexed in the source language. 
 \subsubsection{Assignment Statements with Array Slice set}
 In assignment statements which fall under this category, the left hand side expression is an index expression with atleast one slice index. More information about slice indices can be found in subsection \ref{subsec:advancedindexing}. The right hand side can be any expression. The array slice set operation allows a region of the array to be assigned values. Since C++ does not support array slicing, we have provide a function in the runtime library which implements it. During code generation, the assignment statement is compiled to the function implementing array slice set. The parameters to this call are the array variable of index expression on the left hand side, the right hand side expression and the set of indices which define the region of the array to which the values have to be assigned to. The indices are converted to VrIndex structs. More information to VrIndex can be found sub-section \ref{subsubsec:vrindex}. Table \ref{tab:sliceAssign} shows a VRIR representation with a slice operation on the left hand side and the equivalent C++ code that is generated.
 \subsubsection{Assignment statements that can be optimised  for redundant memory allocations}

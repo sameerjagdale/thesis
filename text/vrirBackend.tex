@@ -1,4 +1,5 @@
 An important contribution of the thesis is the static generation of C++ code from VRIR. Due to differences in the semantics of VRIR and C++, we faced various challenges during code generation. As described in \chapref{chap:Background}, VRIR is a high level strongly typed AST designed to support easy compilation of a wide range of array-based languages. Hence, it supports different indexing schemes such as 0-indexing, 1-indexing and negative indexing as well as different array layout schemes such as row-major and column-major. C++ on the other hand does not have an built in support for arrays, and only supports 0-indexing and a row major layout. Moreover, VRIR also supports multiple returns. On the other hand, we can only return a single value, which can be a scalar, class, struct or a pointer, in C++. This chapter describes how different nodes in VRIR are mapped to C++ constructs including those which C++ does not implicitly support.
+\section{Symbol Table}
 \section{Mapping Types}
 Data types in VRIR, known as VTypes, can be categorised into 5 types :
 \subsection{Scalar Type}
@@ -746,11 +747,11 @@ VRIR &  Generated C++ \\
 \caption[Parallel For example]{The table shows an example of a parallel for statement in VRIR and its equivalent C++ for loop with OpenMP}
 \label{tab:pForStmt}
 \end{table}
-A parallel for loop is compiled to a for loop  in C++ with an openMP pragma inserted before the loop. The shared variables node of the parallel for statement contains IDs of the variables that are shared and are added to the shared option of OpenMP. Private variables are defined by generating a list of variables defined inside the loop and removing the ones that are present in the shared variable list. Table \ref{tab:pForStmt} gives an example of the parallel for statement. The openmp pragma gives a list of shared variables, namely, A,B and c and a list of private variables.
+A parallel for loop is compiled to a for loop  in C++ with an openMP pragma inserted before the loop. The shared variables node of the parallel for statement contains IDs of the variables that are shared and are added to the shared option of OpenMP. The list of shared variables are provided by the language specific frontend. Private variables are defined by generating a list of variables defined inside the loop and removing the ones that are present in the shared variable list. Table \ref{tab:pForStmt} gives an example of the parallel for statement. The openmp pragma gives a list of shared variables, namely, A,B and c and a list of private variables.
 \subsection{Statement List}
 A statement list is used to define multiple statements and is often a child node of the If, For and While statements as well as the Function node.
 \section{Expressions}
-Most expressions VRIR can be compiled to equivalent expressions in C++. Expressions such as index expressions have special cases which need to be considered. The following subsections explain the compilation of the VRIR different expressions.
+Most expressions VRIR can be compiled to equivalent expressions in C++. Expressions such as index expressions have special cases which need to be considered. The following subsections explain the compilation of the different VRIR expressions.
 \subsection{Operators}
 \label{subsec:operators}
 			\begin{table}[htbp]
@@ -827,11 +828,11 @@ A
 \caption[Name Expressions example]{The table shows an example of a name expression in VRIR and its equivalent C++ symbol}
 \label{tab:nameExpr}
 \end{table}
-The name expressions in VRIR denote variables. The `Id' attribute of the name expressions is used to fetch the symbol string from the symbol table. All name expressions that are not passed as parameters to the function are declared at the start of the function body. Table \ref{tab:nameExpr} gives an example of name expressions.
+The name expressions in VRIR denote variables. The `Id' attribute of the name expressions is used to fetch the symbol string from the symbol table. All name expressions that are not passed as parameters to the function are declared at the start of the function body. Table \ref{tab:nameExpr} gives an example of name expressions. In the example, the name expression that has an id of 2 and is of type int64 is converted to a variable A.
 \subsection{Function call expressions}
 Function call expressions in VRIR are used to describe calls to functions that are not defined by  the library call expression or the alloc expression. A function call expression may have zero or more arguments. Arguments can be passed by reference or a copy of the arguments could be passed to the function. We define certain functions as builtins. These are functions that we support through the runtime library. Arguments to builtins are always passed by reference.
 \subsection{Domain Expression}
-Domain expressions are used inside for statements to define the ranges of the for loops. A domain expressions can have one or more ranges. All domain expressions are of the domain type. Table \ref{tab:forStmt} gives an example of how domain expressions inside a for statement are used to generate a for loop in C++.
+Domain expressions are used inside for statements to define the ranges of the for loops. A domain expressions can have one or more ranges. All domain expressions are of the domain type. Table \ref{tab:forStmt} gives an example of how domain expressions inside a for statement are used to generate a for loop in C++. Domain expressions are always found inside for statements. 
 \subsection{Constant Expressions}
 \begin{table}[htbp]
 \centering
@@ -1011,5 +1012,4 @@ struct VrIndex{
 The VrIndex struct is shown in listing \ref{lst:vrIndexStruct}. The structure contains two boolean flags m\_isRange and m\_isArray to differentiate which are used to determine whether the index is a range or an array respectively. If both flags are set to false, the index is a constant value. The constant value is stored in the variable const\_val. The range is stored as an array of size 3. The elements of the array are the start, stop and step values, in order. The array value is store in the variable arr.
 \subsubsection{Array Slicing}
 \ref{subsubsec:slicing}
-\section{Symbol Table}
 \section{Run time library}

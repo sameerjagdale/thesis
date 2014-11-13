@@ -746,7 +746,7 @@ VRIR &  Generated C++ \\
 \caption[Parallel For example]{The table shows an example of a parallel for statement in VRIR and its equivalent C++ for loop with OpenMP}
 \label{tab:pForStmt}
 \end{table}
-A parallel for loop is compiled to a for loop  in C++ with an openMP pragma inserted before the loop. The shared variables node of the parallel for statement contains IDs of the variables that are shared and are added to the shared option of OpenMP. Table \ref{tab:pForStmt} gives an example of the parallel for statement.
+A parallel for loop is compiled to a for loop  in C++ with an openMP pragma inserted before the loop. The shared variables node of the parallel for statement contains IDs of the variables that are shared and are added to the shared option of OpenMP. Private variables are defined by generating a list of variables defined inside the loop and removing the ones that are present in the shared variable list. Table \ref{tab:pForStmt} gives an example of the parallel for statement. The openmp pragma gives a list of shared variables, namely, A,B and c and a list of private variables.
 \subsection{Statement List}
 A statement list is used to define multiple statements and is often a child node of the If, For and While statements as well as the Function node.
 \section{Expressions}

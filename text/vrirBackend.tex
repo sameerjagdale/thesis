@@ -93,6 +93,7 @@ VrArrayB     & bool            \\ \hline
 \end{table}
 Unlike array-based languages, C++ arrays do not store additional information such as the number of dimensions or the sizes of each dimensions. This information is useful while performing various operations such as multiplication, addition etc and hence it was necessary for us to store it. One solution was to store this information separately. However, this approach increases the number of parameters that need to be passed to functions implementing array operations. Moreover, when assigning to an array additional code that needs to be generated to update the dimension sizes and the number of dimensions. Hence, we implemented structs for arrays of all the data types supported by VRIR. We call the structs collectively as VrArrays. The equivalent VrArrays for different array types are shown in table \ref{tab:arrayTypeMap}.
 \subsubsection{VrArrays}
+\label{subsubsec:vrarrays}
 VrArrays are represented as C++ structs and encapsulate array data as well as the meta-data. They contain a pointer to the data as well as other necessary information such as the number of dimensions and the size of each dimension. There are different VrArrays for different data types. The different VrArray types and the VRIR types from which they are mapped are given in table \ref{tab:arrayTypeMap}. The structure of the different VrArrays in given below. Each VrArray has a data field which is a pointer to the array data. The type of the data field depends on the type of the VrArray. For example, the type of VrArrayF64, which is used to represent an float64 array is double. 
 There are separate VrArray types for complex and real arrays of the same type. All operations on arrays in the language runtime take VrArrays as input. This allows single parameter to be passed for array instead of passing the data, dimensions and number of dimensions separately. The full list of VrArrays and the types of their corresponding data fields is given in table \ref{tab:arrayDataMap}.
 \begin{lstlisting}[float,language=c, label={vrArrayF64Struct}, caption={Structures of VrArrays for real data}]
@@ -1025,7 +1026,7 @@ Languages such as Python support negative indices. The index refers to an offset
 We define cases where the array indices are non-scalar as advanced indexing. The indices can either be arrays or ranges. The index expression is compiled to a function call which returns an appropriate value for the given input indices. The function takes as input, arguments of type VrIndex, a struct defined in the runtime library.
 \subsubsection{VrIndex}
 \label{subsubsec:vrindex}
-\begin{lstlisting}[language=c,caption={VrIndex Structure},label={lst:vrIndexStruct}]
+\begin{lstlisting}[float,language=c,caption={VrIndex Structure},label={lst:vrIndexStruct}]
 struct VrIndex{ 
 	bool m_isRange; 
 	bool m_isArray; 
@@ -1040,7 +1041,115 @@ struct VrIndex{
 	VrIndex();
 };
 \end{lstlisting}
-The VrIndex struct is shown in listing \ref{lst:vrIndexStruct}. The structure contains two boolean flags m\_isRange and m\_isArray to differentiate which are used to determine whether the index is a range or an array respectively. If both flags are set to false, the index is a constant value. The constant value is stored in the variable const\_val. The range is stored as an array of size 3. The elements of the array are the start, stop and step values, in order. The array value is store in the variable arr.
+The VrIndex struct is shown in listing \ref{lst:vrIndexStruct}. The structure contains two boolean flags m\_isRange and m\_isArray to differentiate which are used to determine whether the index is a range or an array respectively. If both flags are set to false, the index is a constant value. The constant value is stored in the variable const\_val. The range is stored as an array of size 3. The elements of the array are the start, stop and step values, in order. The array value is stored in the variable arr.
 \subsubsection{Array Slicing}
 \label{subsubsec:slicing}
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+VRIR &  Generated C++ \\
+\hline
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+(index :arrayid 0 :copyslice %0
+	( arraytype :layout colmajor :ndims 2
+		(float64 :ctype 0))
+	(indices
+		(index :boundscheck %1 :negative %0
+			(name :id 4
+				(float64 :ctype 0)
+			)
+		)
+		(index :boundscheck %1 :negative %0
+			(range :exclude %0
+				(start
+					(plus
+						(float64 :ctype 0)
+						(lhs
+							(name :id 4
+								(float64 :ctype 0)
+							)
+						)
+						(rhs
+							(realconst :dval 1
+								(float64 :ctype 0)
+							)
+						)
+					)
+				)
+				(stop
+					(name :id 3
+						(float64 :ctype 0)
+					)
+				)
+			)
+		)
+	)
+)
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+R.sliceArraySpec(VrIndex(k)
+	,VrIndex((k + 1),n,1))
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[Array slicing example]{The table shows an example of an index expression in VRIR that is converted to an array slicing function call in C++}
+\label{tab:sliceIndex}
+\end{table}
+Array slicing operations extract certain elements of an array. We define two types of array operations, the array slice get and the array slice set. An array slicing operation is performed if one or more of the indices of an index expression in VRIR is a range expression. The range defines elements to be extracted. Index expressions can contain a combination of range expressions and other expressions having scalar as well as array types. Hence each expression is converted to a VrIndex struct. Array slicing operations are implemented as class methods of VrArrays. The method for array slice get is called sliceArray and that for array slice set is setSliceArray. Specialised versions of the methods for one, two and three indices are also implemented. The specialised versions for array slice get and set are sliceArraySpec and setSliceArraySpec respectively. Table \ref{tab:sliceIndex} gives an example of an array slice get operation. The generated C++ code is a function call to the specialised version for two indices, sliceArraySpec. The first parameter is a simple scalar index k, where as the second parameter is a range from k+1 to n. Both parameters are converted to VrIndex structs through constructors.
 \section{Run time library}
+Languages like \matlab and Python's NumPy library provide a number of high-level numerical or scientific functions. These functions include trigonometric functions such as sin, cos etc., memory allocation functions such as zeros, ones among others. Moreover, \matlab and NumPy also provide simple arithemetic operations on arrays such as multiplication, addition, transpose etc. Additionally, these languages also implicitly provide boundschecks for indexing operations. C++ on the other hand, does not provide many of the functions mentioned above. Hence we provide a language specific runtime library to implement these functions. We currently provide libraries for \matlab and Python. Simple arithmetic operations on arrays are provided using BLAS libraries. We use the Intel MKL library for \matlab and the OpenBLAS library for Python. The libraries also contain implementations for VrArrays that are descibed in Subsection \ref{subsubsec:vrarrays}
+\subsection{Memory allocation functions}
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+VRIR &  Generated C++ \\
+\hline
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+(alloc :func zeros
+	( arraytype :layout colmajor :ndims 2
+		(float64 :ctype 0)
+	) (args
+		(name :id 2
+			(float64 :ctype 0)
+		)
+		(name :id 4
+			(float64 :ctype 0)
+		)
+	)
+)
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+ zeros_double(2,(int)m,(int)n)
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[Memory allocation example]{The table shows an example of an alloc expression in VRIR that is converted to a zeros function call in C++}
+\label{tab:allocFunc}
+\end{table}
+Memory allocation functions are used to create n-dimensional arrays. The size of each dimension has to be provided as input. The compiler generates these functions from the alloc expression in VRIR. There three types of memory allocation functions. 
+\begin{itemize}
+\item zeros : Allocates memory for a n-dimensional array and initialises all elements in the array to zero.
+\item ones : Allocates memory for a n-dimensional array and initialises all elements in the array to one.
+\item empty : Allocates memory for a n-dimensional array but does not initialise the array.
+\end{itemize}
+Every function type has different implementations for different array types. The function name is as follows, <functionType>\_<array type>. Table \ref{tab:allocFunc} gives an example of a memory allocation function. In the example a zeros function for create a double array, VrArrayF64, is created. The array has two dimensions of size m and n respectively. Note that the empty function is supported in Python but not supported in \matlab. Hence only the Python runtime library supports it.
+\subsection{Mathematical functions} 
+The runtime library supports various mathematical functions that can be found in the high-level languages. These include trigonometric operations, exponential functions etc. Many of these functions can work on both scalars and arrays. For scalars, we generate calls to functions in the standard C++ library. For arrays, calls to functions in the runtime library are generated. These functions can be generated from both libcall expressions as well as function call expressions.  Functions on arrays can be divided into two types.
+\begin{itemize}
+\item Element-wise functions : These functions operate on each element of the array independently. The dimensions of the output array are the same as that of the input array. A few examples of these functions include sin, cos, exp etc. 
+\item Dimension collapsing functions : These functions are take multiple array elements as input to generate a single output. The dimensions of the output array are not the same as the input array. Sum, mean are a few examples of dimension collapsing functions. The dimensions of the output of these functions are many times dependent on the dimensions of the input array. For example, in \matlab, if a matrix is given as an input to the sum function, the function will calculate the the sum of each column and return a row vector. On the other hand, if a row or column vector is provided as input, the sum function will calculate the sum of all the elements and return a scalar value. On the hand, in Python, the sum function will calculate sum of all the elements in the array and return a scalar value by default. The function will return a vector if an additional argument specifying the dimension along which the sum has to be calculated. Taking into account these differences, we provide two sets of functions, one for cases where a scalar value is returned and one where an array is returned. The names of the functions which return scalars have the word 'scalar' appended to the names of the original function. For example, if the name of the original function  which returns an array is sum, the name of the function returning a scalar value is sum\_scalar.
+\end{itemize}

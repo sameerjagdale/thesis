@@ -5,6 +5,7 @@
 \subsection{Technique}
 \section{Eliminating unnecessary memory allocations}
 \label{sec:memoptimise}
+Array operations and array slicing are implemented through functions in the runtime library. The output of these operations is written to a new array created inside the functions. Many times these operations are performed inside loops and the output is assigned to the same array variable. However, runtime memory allocation in expensive and hence performance of the code can be improved by reusing the memory. Through this optimisation, we try to eliminate memory allocations when they are not required and instead reuse previously allocated memory. 
 \subsection{Targeted program points}
 \subsection{Techinique}
 

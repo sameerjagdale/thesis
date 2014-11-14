@@ -6,9 +6,30 @@
 \section{Eliminating unnecessary memory allocations}
 \label{sec:memoptimise}
 Array operations and array slicing are implemented through functions in the runtime library. The output of these operations is written to a new array created inside the functions. Many times these operations are performed inside loops and the output is assigned to the same array variable. However, runtime memory allocation in expensive and hence performance of the code can be improved by reusing the memory. Through this optimisation, we try to eliminate memory allocations when they are not required and instead reuse previously allocated memory. 
-\subsection{Targeted program points}
-\subsection{Techinique}
-
-
-
+\subsection{Supported Functions}
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+Function Name & Function description         & Scalar version \\ \hline
+mmult         & Matrix multiplication        & Yes            \\ \hline
+scal\_mult    & Scalar Matrix Multiplication & No             \\ \hline
+vec\_add      & Array Addiction              & No             \\ \hline
+vec\_copy     & Array Copy                   & No             \\ \hline
+vec\_sub      & Array Subtraction            & No             \\ \hline
+scal\_add     & Scalar Array Addition        & No             \\ \hline
+scal\_minus   & Scalar Array Subtraction     & No             \\ \hline
+transpose     & Matrix Transpose             & No             \\ \hline
+sum           & Sum of Array Elements        & Yes            \\ \hline
+mean          & Mean of Array Elements       & Yes            \\ \hline
+sliceArray          & Get array slice        & No            \\ \hline
+\end{tabular}
+\caption{List of functions that support memory optimisation}
+\label{tab:memoptimiselist}
+\end{table}
+Since a check for sufficient memory allocation needs to be made inside the function, a reference to the output array also needs to the be passed. Hence we implement specialised functions for this optimisation. The Supported library functions include many of the  array operations described in Subsection \ref{subsec:arrayOps} and a few other library functions. For dimension collapsing functions we support cases where a scalar value is returned. Table \ref{tab:memoptimiselist} gives a list of functions for which an implementation support the memory optimisation exists. 
+\subsection{Checking for sufficient memory}
+As mentioned before, the specialised functions accept a reference to the output array as an input parameter. The output array is then checked to determine whether the maximum number of elements that the array can hold is greater than or equal to the number of elements of the output of the operation performed by the function. The number of elements are calculated by taking the product of the dimensions of the array. If the memory is sufficient, no memory is allocated to the array whereas memory is allocated if it is not sufficient. In either case, the dimensions are modified to be equal to the expected dimensions of the output of the array operation.   
+\subsection{Code generation}
+While generating code for assignment statements, the compiler checks for library call expressions which can be compiled to specialised function calls. The compiler does this by checking the function name against a hash set which stores a list of functions that can be specialised. The compiler generates the specialised function call in place of the assignment statement. It then passes the reference LHS of the assignment statement as a a parameter to the function. 
 

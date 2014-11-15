@@ -125,6 +125,7 @@ These functions operate on each element of the array independently. The dimensio
 \subsubsection{Dimension collapsing functions}
 These functions are take multiple array elements as input to generate a single output. The dimensions of the output array are not the same as the input array. Sum, mean are a few examples of dimension collapsing functions. The dimensions of the output of these functions are many times dependent on the dimensions of the input array. For example, in \matlab, if a matrix is given as an input to the sum function, the function will calculate the the sum of each column and return a row vector. On the other hand, if a row or column vector is provided as input, the sum function will calculate the sum of all the elements and return a scalar value. On the hand, in Python, the sum function will calculate sum of all the elements in the array and return a scalar value by default. The function will return a vector if an additional argument specifying the dimension along which the sum has to be calculated. Taking into account these differences, we provide two sets of functions, one for cases where a scalar value is returned and one where an array is returned. The names of the functions which return scalars have the word 'scalar' appended to the names of the original function. For example, if the name of the original function  which returns an array is sum, the name of the function returning a scalar value is sum\_scalar.
 \subsection{Array Operations}
+\label{subsec:arrayOps}
 \begin{table}[h]
 \centering
 \begin{tabular}{|c|c|}

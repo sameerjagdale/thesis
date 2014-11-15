@@ -1,8 +1,48 @@
+The primary goal of the thesis was to ensure correct compilation of code from \matlab and Python to C++. An additional goal was to improve the performance of the generated code. Initial experiments showed that turning on bounds check slowed down 6 of the 17 benchmarks and 3 of the 9 benchmarks in Python. The geometric mean of the slowdown compared to bounds check turned off was 3.92 for \matlab and 2.25 for Python. Additionally, while analysing the generated code, we found that array operations being performed inside loops were allocating memory to the same output array for every iteration. We determined that by optimising the code to eliminate bounds checks and unnecessary memory allocations, we gain a significant improvement in performance. 
 \section{BoundsChecks}
-\subsection{Implementation}
-\section{Bound check elimination}
+\begin{lstlisting}[float,language=c,caption={An example of the bounds check function call.},label={lst:boundscheck}]
+//Bounds check 
+#ifdef BOUND_CHECK
+	checkBounds<VrArrayPtrF64,double>(&c,false,2,vrIndex(i),vrIndex(j));
+#endif
+\end{lstlisting}
+\begin{lstlisting}[float,language=c,caption={An example of the specialised bounds check function call},label={lst:boundscheck_spec}]
+//Bounds check 
+#ifdef BOUND_CHECK
+	checkBounds_spec<VrArrayPtrF64,double>(&c,false,
+		static_cast<dim_type>(i),static_cast<dim_type>(j));
+#endif
+\end{lstlisting}
+Scientific languages like \matlab and Python support array bounds checks for indexing operations. These checks ensure that the program does not crash abruptly and instead throws an error before exiting. On the other hand, C++ implicitly support array bounds checks. Hence we provide bounds checks through the runtime library. \\
+Due to differences in semantics of \matlab and Python, the boundscheck implementations for both languages are different. Hence we provide different implementations for the two languages. Array growth is also carried out by the bounds check implmentation for languages that support it. However, the API for both language implementations is the same. The entry point function for bounds checks is a templated function called checkBounds. Listing \ref{lst:boundscheck} gives an example of the boundscheck function for the array c. The bounds check functions are called inside conditional blocks which allows the user to turn the checks on or off while compiling the code. The first parameter is the reference to array on which the indexing operation is performed. The second parameter is a boolean flag which is set to true if the boolean operation is on the LHS of an assignment statement. This flag is used to determine if the array should be grown when one or more indices exceed bounds. This check is only used by the \matlab implementation. The third parameter is the number of indices. This parameter is require since the function accepts variable arguments. The remaining parameters are the indices which are passed as VrIndex structs. Passing indices as VrIndex structs allows the function to handle different index types such as ranges and arrays. \\
+However, the default bounds check function performs poorly due to dynamic memory allocation. The implementation inserts the indices into an array and performs checks while iterating over the array. Using an array simplifies the code for the checks. However, since the number of indices can vary, the array cannot be created at compile time.\\
+In order to improve performance of the bounds checks, we implemented specialised versions of the bounds check function for index operations with one, two and three indices. We also implemented three additional versions for index operations where all indices have numeric values. These specialised functions are called checkBounds\_spec. Listing \ref{lst:boundscheck_spec} shows an example of the specialised version of the bounds check function. The function is specialised for two indices, both of which have numeric values. The first two parameters denote the array and whether the operation is performed on the LHS like in the default function. The remaining two parameters are the indices. 
+\section{Bounds check elimination}
+Slowdown when the bounds checks was identified to be more when the checks are performed inside loop bodies. In such cases, the checks are performed for every loop iteration resulting in the slowdown. One technique to improve performance of the code would be to perform the checks once outside the loop. Two versions of the loop would be generated. If all the checks passed, a checks free version would be executed whereas a version with all the checks turned on would be executed if one or more of the checks failed. This technique can be implemented on a subset of the indices known as affine indices. 
 \subsection{Affine indices}
+A function of one or more variables is considered to be affine if it can be expressed as a sum of constant and constant multiples of the variables. Equation \ref{eq:affineIndex} gives a mathematical representation of affine functions. 
+\begin{equation}
+\label{eq:affineIndex}
+f = C_0 + \sum\limits_{i=1}^n C_iX_i 
+\end{equation}
+where $C_i$ is the $i^{th}$ constant and $X_i$ is the $i^{th}$ variable.  \\
+Affine indices can be defined as array indices which are affine functions of the loop induction variables. Table \ref{tab:affineIndex} gives examples of affine and non-affine array indices. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+Array Index & Affine \\ \hline
+A(2*i+1)    & Yes    \\ \hline
+A(i-1)    & Yes    \\ \hline
+A(i*j)      & No    \\ \hline
+A(i*i)      & No     \\ \hline
+A(b(i))     & No     \\ \hline
+\end{tabular}
+\caption{Examples of affine and non-affine indices}
+\label{tab:affineIndex}
+\end{table}
 \subsection{Technique}
+
 \section{Eliminating unnecessary memory allocations}
 \label{sec:memoptimise}
 Array operations and array slicing are implemented through functions in the runtime library. The output of these operations is written to a new array created inside the functions. Many times these operations are performed inside loops and the output is assigned to the same array variable. However, runtime memory allocation in expensive and hence performance of the code can be improved by reusing the memory. Through this optimisation, we try to eliminate memory allocations when they are not required and instead reuse previously allocated memory. 

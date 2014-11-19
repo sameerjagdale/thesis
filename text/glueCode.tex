@@ -1,6 +1,20 @@
 The \velocty compiler generates C++ code for functions identified as computationally intensive by the user. The rest of the code is not compiled. Thus, since the computationally intensive functions and the remaining part of the program are in two different programming languages, namely C++ and the source language, an interface between the two code sections is required. Most high-level languages provide an API to interface with C/C++. PyVrir generates the required interface or glue code for Python. However, no glue code generator existed for \matlab.  Hence, along with generating VRIR, we also generate C++ code required to interface \matlab programs with the generated functions. The \matlab MEX API is used for the interface. 
-\section{Generating include files}
-
+\section{Generating code for including header files}
+Header files are required for the following reasons.
+\begin{itemize}
+\item Declarations of MEX functions. 
+\item Declaration of functions in the runtime library. 
+\item Declaration of OpenMP functions.
+\end{itemize}
+The header files are included using the "include" preprocessor directive. 
+\begin{lstlisting}[float,language=c,caption={Example of header files in glue code},label={lst:glueCodeHeader}]
+#include<mex.h>
+#include"matrix_ops.hpp"
+#include"library_ops.hpp"
+#include"matmul_pImpl.hpp"
+#include<omp.h>
+\end{lstlisting}
+Listing \ref{lst:glueCodeHeader} gives an example of the header files that are generated. The header file "mex.h" provides the set of declarations for the MEX API functions. The header files matrix\_ops.hpp library\_ops.hpp contain class and function declarations of our runtime library. Function declarations of the generated code are provided by matmul\_pImpl.hpp. The file omp.h is provided for OpenMP functions and directives. 
 \section{Generating mexFunction}
 \subsection{VrArrays from MxArrays}
 \subsection{Function call}

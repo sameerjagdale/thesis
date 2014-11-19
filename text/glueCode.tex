@@ -1,6 +1,8 @@
+The \velocty compiler generates C++ code for functions identified as computationally intensive by the user. The rest of the code is not compiled. Thus, since the computationally intensive functions and the remaining part of the program are in two different programming languages, namely C++ and the source language, an interface between the two code sections is required. Most high-level languages provide an API to interface with C/C++. PyVrir generates the required interface or glue code for Python. However, no glue code generator existed for \matlab.  Hence, along with generating VRIR, we also generate C++ code required to interface \matlab programs with the generated functions. The \matlab MEX API is used for the interface. 
 \section{Generating include files}
+
 \section{Generating mexFunction}
 \subsection{VrArrays from MxArrays}
 \subsection{Function call}
 \subsection{Handling return variables}
-\subsection{Converting vrArrays to mxArrays}
+\subsection{Converting VrArrays to mxArrays}

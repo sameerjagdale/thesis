@@ -1,4 +1,4 @@
-An important contribution of the thesis is the static generation of C++ code from VRIR. Due to differences in the semantics of VRIR and C++, we faced various challenges during code generation. As described in \chapref{chap:Background}, VRIR is a high level strongly typed AST designed to support easy compilation of a wide range of array-based languages. Hence, it supports different indexing schemes such as 0-indexing, 1-indexing and negative indexing as well as different array layout schemes such as row-major and column-major. C++ on the other hand does not have an built in support for arrays, and only supports 0-indexing and a row major layout. Moreover, VRIR also supports multiple returns. On the other hand, we can only return a single value, which can be a scalar, class, struct or a pointer, in C++. This chapter describes how different nodes in VRIR are mapped to C++ constructs including those which C++ does not implicitly support.
+An important contribution of the thesis is the static generation of C++ code from VRIR. Due to differences in the semantics of VRIR and C++, we faced various challenges during code generation. As described in \chapref{chap:Background}, VRIR is a high level strongly typed AST designed to support easy compilation of a wide range of array-based languages. Hence, it supports different indexing schemes such as 0-indexing, 1-indexing and negative indexing as well as different array layout schemes such as row-major and column-major. C++ on the other hand does not have an built in support for arrays, and only supports 0-indexing and a row major layout. Moreover, VRIR also supports multiple returns. On the other hand, we can only return a single value, which can be a scalar, class, struct or a pointer, in C++. This chapter describes how the symbol table is used for code generation, the runtime library and finally how different nodes of VRIR such as statements, types and expressions are compiled to C++ constructs. 
 \section{Symbol Table}
 \begin{lstlisting}[float,language=lisp, label={lst:symtab}, caption={Symbol table in VRIR}]
 (symtable
@@ -29,7 +29,7 @@ An important contribution of the thesis is the static generation of C++ code fro
 	) 
 )
 \end{lstlisting}
-The symbol table contains a list of symbols that are defined inside a function in VRIR. The table contains the name and the type of each symbol. Moreover, there is a unique id associated with every symbol using which it is referenced in the function. Listing \ref{lst:symtab} gives an example of a symbol table in VRIR. The symbol table contains a set of sym nodes each having a unique id. For example, the sym node with id 5 is the symbol par which is of type float64.
+The symbol table contains a list of symbols that are defined inside a function in VRIR. The table contains the name and the type of each symbol. Moreover, there is a unique id associated with every symbol using which it is referenced in the function. Listing \ref{lst:symtab} gives an example of a symbol table in VRIR. The symbol table contains a set of sym nodes each having a unique id. For example, the sym node with id 5 on line 2 is the symbol par which is of type float64.
 \section{Run time library}
 Languages like \matlab and Python's NumPy library provide a number of high-level numerical and scientific functions. These functions include trigonometric functions such as sin, cos etc., memory allocation functions such as zeros, ones among others. Moreover, \matlab and NumPy also provide simple arithemetic operations on arrays such as multiplication, addition, transpose etc. Additionally, these languages also implicitly provide boundschecks for indexing operations. C++ on the other hand, does not provide many of the functions mentioned above. Hence we provide a language specific runtime library to implement these functions. We currently provide libraries for \matlab and Python. Simple arithmetic operations on arrays are provided using BLAS libraries. We use the Intel MKL library for \matlab and the OpenBLAS library for Python. The libraries also contain implementations for VrArray which are a VeloCty specific array representation. 
 \subsection{VrArrays}
@@ -74,16 +74,57 @@ typedef struct VrArrayCF64{
   int ndims;
 }VrArrayCF64;
 \end{lstlisting}
+
 VrArrays are represented as C++ structs and encapsulate array data as well as the meta-data. They contain a pointer to the data as well as other necessary information such as the number of dimensions and the size of each dimension. There are different VrArrays for different data types. The different VrArray types and the VRIR types from which they are mapped are given in table \ref{tab:arrayTypeMap}. The structure of the different VrArrays in given below. Each VrArray has a data field which is a pointer to the array data. The type of the data field depends on the type of the VrArray. For example, the type of VrArrayF64, which is used to represent an float64 array is double. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|c|c|}
+\hline
+\multicolumn{3}{|c|}{Array Type}                                                                                                                                                                                  & \multirow{2}{*}{VrArray}         \\ \cline{1-3}
+Name                                                                       & Real / Complex & S-expression                                                                                                            &                                  \\ \hline
+\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Float64\\ Array\end{tabular}}   & REAL       & \begin{tabular}[c]{@{}c@{}}( arraytype :ndims :layout \\ ( float64 :ctype complex) )\end{tabular}                       & VrArrayF64                       \\ \cline{2-4} 
+                                                                           & COMPLEX    & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}( arraytype :ndims :layout \\ ( float64 :ctype complex) )\end{tabular}}  & \multicolumn{1}{c|}{VrArrayCF64} \\ \hline
+\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Float32 \\ Array\end{tabular}}  & REAL       & \begin{tabular}[c]{@{}c@{}}( arraytype :ndims \\ :layout \\ ( float32  ctype: real ) )\end{tabular}                     & VrArrayF32                       \\ \cline{2-4} 
+                                                                           & COMPLEX    & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}( arraytype :ndims :layout \\ ( float32,ctype: complex ) )\end{tabular}} & \multicolumn{1}{l|}{VrArrayCF32} \\ \hline
+\begin{tabular}[c]{@{}c@{}}Int32 \\ Array\end{tabular}                     & REAL       & \begin{tabular}[c]{@{}c@{}}( arraytype :ndims :layout \\ ( int32 ctype: real ) )\end{tabular}                           & VrArrayI32                       \\ \hline
+\begin{tabular}[c]{@{}c@{}}Int64 \\ Array\end{tabular}                     & REAL       & \begin{tabular}[c]{@{}c@{}}( arraytype :ndims :layout \\ ( int32 ctype: real ) )\end{tabular}                           & VrArrayI64                       \\ \hline
+\multicolumn{1}{|c|}{\begin{tabular}[c]{@{}l@{}}Bool\\ Array\end{tabular}} & REAL       & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}( arraytype :ndims :layout \\ ( int32 ctype: real ) )\end{tabular}}      & \multicolumn{1}{c|}{VrArrayB}    \\ \hline
+\end{tabular}
+\caption[Array Types]{ArrayType map. The table shows the VrArray types the ArrayTypes in VRIR are mapped to.}
+\label{tab:arrayTypeMap}
+\end{table}
 There are separate VrArray types for complex and real arrays of the same type. All operations on arrays in the language runtime take VrArrays as input. This allows single parameter to be passed for array instead of passing the data, dimensions and number of dimensions separately. The full list of VrArrays and the types of their corresponding data fields is given in table \ref{tab:arrayDataMap}.
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+VrArray Type & Data Field Type \\ \hline
+VrArrayF64   & double          \\ \hline
+VrArrayF32   & float           \\ \hline
+VrArrayCF64  & double complex  \\ \hline
+VrArrayCF32  & float complex  \\ \hline
+VrArrayI64   & long            \\ \hline
+VrArrayI32   & int             \\ \hline
+VrArrayB     & bool            \\ \hline
+\end{tabular}
+\caption[Data field types of different VrArrays]{Data field types of different VrArrays. Table depicting the types of the data field for different VrArray types.}
+\label{tab:arrayDataMap}
+\end{table}
 \subsection{Memory allocation functions}
+Memory allocation functions are used to create n-dimensional arrays. The size of each dimension has to be provided as input. The compiler generates these functions from the alloc expression in VRIR. There three types of memory allocation functions. 
+\begin{itemize}
+\item zeros : Allocates memory for a n-dimensional array and initialises all elements in the array to zero.
+\item ones : Allocates memory for a n-dimensional array and initialises all elements in the array to one.
+\item empty : Allocates memory for a n-dimensional array but does not initialise the array.
+\end{itemize}
+Every function type has different implementations for different array types. The function name is as follows, <functionType>\_<array type>. Table \ref{tab:allocFunc} gives an example of a memory allocation function. In the example a zeros function for create a double array, VrArrayF64, is created. The array has two dimensions of size m and n respectively. Note that the empty function is supported in Python but not supported in \matlab. Hence only the Python runtime library supports it.
 \begin{table}[htbp]
 \centering
 \begin{tabular}{|l|l|}
 \hline
 
 VRIR &  Generated C++ \\
-\hline
+\hhline{|=|=|}
 {
 \begin{lstlisting}[language=lisp,frame=none, numbers=none]
 (alloc :func zeros
@@ -111,41 +152,20 @@ VRIR &  Generated C++ \\
 \caption[Memory allocation example]{The table shows an example of an alloc expression in VRIR that is converted to a zeros function call in C++}
 \label{tab:allocFunc}
 \end{table}
-Memory allocation functions are used to create n-dimensional arrays. The size of each dimension has to be provided as input. The compiler generates these functions from the alloc expression in VRIR. There three types of memory allocation functions. 
-\begin{itemize}
-\item zeros : Allocates memory for a n-dimensional array and initialises all elements in the array to zero.
-\item ones : Allocates memory for a n-dimensional array and initialises all elements in the array to one.
-\item empty : Allocates memory for a n-dimensional array but does not initialise the array.
-\end{itemize}
-Every function type has different implementations for different array types. The function name is as follows, <functionType>\_<array type>. Table \ref{tab:allocFunc} gives an example of a memory allocation function. In the example a zeros function for create a double array, VrArrayF64, is created. The array has two dimensions of size m and n respectively. Note that the empty function is supported in Python but not supported in \matlab. Hence only the Python runtime library supports it.
 \subsection{Mathematical functions} 
 The runtime library supports various mathematical functions that can be found in the high-level languages. These include trigonometric operations, exponential functions etc. Many of these functions can work on both scalars and arrays. For scalars, we generate calls to functions in the standard C++ library. For arrays, calls to functions in the runtime library are generated. These functions can be generated from both libcall expressions as well as function call expressions.  Functions on arrays can be divided into two types, element-wise functions, dimension collapsing functions. 
 \subsubsection{Element-wise functions}
-These functions operate on each element of the array independently. The dimensions of the output array are the same as that of the input array. A few examples of these functions include sin, cos, exp etc. 
+These functions operate on each element of the array independently. The dimensions of the output array are the same as that of the input array. A few examples of these functions include sin, cos, exp, etc. 
 \subsubsection{Dimension collapsing functions}
-These functions are combine multiple array elements to generate a output. The dimensions of the output array are not the same as the input array. Sum, mean are a few examples of dimension collapsing functions. The dimensions of the output of these functions are many times dependent on the dimensions of the input array. For example, in \matlab, if a matrix is given as an input to the sum function, the function will calculate the the sum of each column and return a row vector. On the other hand, if a row or column vector is provided as input, the sum function will calculate the sum of all the elements and return a scalar value. On the hand, in Python, the sum function will calculate sum of all the elements in the array and return a scalar value by default. The function will return a vector if an additional argument specifying the dimension along which the sum has to be calculated is provided. Taking into account these differences, we provide two sets of functions, one for cases where a scalar value is returned and one where an array is returned. The names of the functions which return scalars have the word 'scalar' appended to the names of the original function. For example, if the name of the original function  which returns an array is sum, the name of the function returning a scalar value is sum\_scalar.
+These functions are combine multiple array elements to generate a output. The dimensions of the output array are not the same as the input array. Sum, mean, prod and dot are a few examples of dimension collapsing functions. The dimensions of the output of these functions are many times dependent on the dimensions of the input array. For example, in \matlab, if a matrix is given as an input to the sum function, the function will calculate the the sum of each column and return a row vector. On the other hand, if a row or column vector is provided as input, the sum function will calculate the sum of all the elements and return a scalar value. Additionally, in Python, the sum function will calculate sum of all the elements in the array and return a scalar value by default. The function will return a vector if an additional argument specifying the dimension along which the sum has to be calculated is provided. Taking into account these differences, we provide two sets of functions, one for cases where a scalar value is returned and one where an array is returned. The names of the functions which return scalars have the word 'scalar' appended to the names of the original function. For example, if the name of the original function  which returns an array is sum, the name of the function returning a scalar value is sum\_scalar.
 \subsection{Array Operations}
 \label{subsec:arrayOps}
-\begin{table}[h]
-\centering
-\begin{tabular}{|c|c|}
-\hline
-VrArray     & Class name        \\ \hline
-VrArrayF64  & BlasDouble        \\ \hline
-VrArrayF32  & BlasSingle        \\ \hline
-VrArrayCF64 & BlasComplexDouble \\ \hline
-VrArrayCF32 & BlasComplexSingle \\ \hline
-VrArrayI64  & BlasLong          \\ \hline
-VrArrayI32  & BlasInt           \\ \hline
-\end{tabular}
-\caption{The table gives a list of VrArrays and the respective names of classes implementing array operations}
-\label{tab:vrArrayToBlasClass}
-\end{table}
+As mentioned before, C++ does not support basic operations such as addition, multiplication or transpose on arrays. Hence we support these operations through the runtime library. The operations are implemented as static methods of a class. There is a class for every array type. For example, the operations for VrArrayF64 are implemented as static methods for the class BlasDouble. Table \ref{tab:vrArrayToBlasClass} gives the entire list of classes implementing array operations for VrArrays. The methods call BLAS functions where possible for improved performance. We have also implemented specialised versions of many of the methods for memory allocation optimisation that is described in Section \ref{sec:memoptimise}.
 \begin{table}[h]
 \centering
 \begin{tabular}{|c|c|c|c|}
 \hline
-Method Name & Operation performed          & BLAS Call & Specialised Version \\ \hline
+Method Name & Operation performed          & BLAS Call & Specialised Version \\ \hhline{|=|=|=|=|}
 mmult       & Matrix Multiplication        & gemm      & Yes                 \\ \hline
 vec\_mult   & Vector-Matrix Multiplication & gemv      & No                  \\ \hline
 scal\_mult  & Scalar-Matrix Multiplication & scal      & Yes                 \\ \hline
@@ -158,8 +178,23 @@ transpose   & Matrix Transpose             & -         & Yes                 \\ 
 \end{tabular}
 \caption{The table gives a list of array operations that are implemented by the runtime library.}
 \label{tab:blasMethods}
+\end{table} 
+Table \ref{tab:blasMethods} gives a list of array operations implemented by the runtime library.
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+VrArray     & Class name        \\ \hhline{|=|=|}
+VrArrayF64  & BlasDouble        \\ \hline
+VrArrayF32  & BlasSingle        \\ \hline
+VrArrayCF64 & BlasComplexDouble \\ \hline
+VrArrayCF32 & BlasComplexSingle \\ \hline
+VrArrayI64  & BlasLong          \\ \hline
+VrArrayI32  & BlasInt           \\ \hline
+\end{tabular}
+\caption{The table gives a list of VrArrays and the respective names of classes implementing array operations}
+\label{tab:vrArrayToBlasClass}
 \end{table}
-As mentioned before, C++ does not support basic operations such as addition, multiplication, transpose on arrays. Hence we support these operations through the runtime library. The operations are implemented as static methods of a class. There is a class for every array type. For example, the operations for VrArrayF64 are implemented as static methods for the class BlasDouble. Table \ref{tab:vrArrayToBlasClass} gives the entire list of classes implementing array operations for VrArrays. The methods call BLAS functions where possible for improved performance. We have also implemented specialised versions of many of the methods for memory allocation optimisation that is described in Section \ref{sec:memoptimise}. Table \ref{tab:blasMethods} gives a list of array operations implemented by the runtime library.
 \section{Mapping Types}
 Data types in VRIR, known as VTypes, can be categorised into 5 types :
 \subsection{Scalar Type}
@@ -171,7 +206,7 @@ The mapping of VTypes to different C++ types is shown in table \ref{tab:typeMap}
 \begin{tabular}{|c|c|c|c|}
 \hline
 \multicolumn{2}{|c|}{Scalar Type}                                                                 & \multirow{2}{*}{Real / Complex}  & \multirow{2}{*}{C++ types} \\ \cline{1-2}
-Name                                         & S-Expression                                      &                              &                            \\ \hline
+Name                                         & S-Expression                                      &                              &                            \\ \hhline{|=|=|=|=|}
 \multirow{2}{*}{Float32}                     & \multicolumn{1}{c|}{\multirow{2}{*}{( float32 )}} & REAL                         & float                        \\ \cline{3-4} 
                                              & \multicolumn{1}{c|}{}                             & \multicolumn{1}{c|}{COMPLEX} & float complex              \\ \hline
 \multirow{2}{*}{Float64}                     & \multicolumn{1}{c|}{\multirow{2}{*}{( float64 )}} & REAL                         & double                       \\ \cline{3-4} 
@@ -187,54 +222,10 @@ Name                                         & S-Expression                     
 \label{tab:typeMap}
 \end{table}
 \subsection{Array Types}
-\begin{table}[htbp]
-\centering
-\begin{tabular}{|c|c|c|c|}
-\hline
-\multicolumn{3}{|c|}{Array Type}                                                                                                                                                                                  & \multirow{2}{*}{VrArray}         \\ \cline{1-3}
-Name                                                                       & Real / Complex & S-expression                                                                                                            &                                  \\ \hline
-\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Float64\\ Array\end{tabular}}   & REAL       & \begin{tabular}[c]{@{}c@{}}( arraytype :ndims :layout \\ ( float64 :ctype complex) )\end{tabular}                       & VrArrayF64                       \\ \cline{2-4} 
-                                                                           & COMPLEX    & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}( arraytype :ndims :layout \\ ( float64 :ctype complex) )\end{tabular}}  & \multicolumn{1}{c|}{VrArrayCF64} \\ \hline
-\multirow{2}{*}{\begin{tabular}[c]{@{}c@{}}Float32 \\ Array\end{tabular}}  & REAL       & \begin{tabular}[c]{@{}c@{}}( arraytype :ndims \\ :layout \\ ( float32  ctype: real ) )\end{tabular}                     & VrArrayF32                       \\ \cline{2-4} 
-                                                                           & COMPLEX    & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}( arraytype :ndims :layout \\ ( float32,ctype: complex ) )\end{tabular}} & \multicolumn{1}{l|}{VrArrayCF32} \\ \hline
-\begin{tabular}[c]{@{}c@{}}Int32 \\ Array\end{tabular}                     & REAL       & \begin{tabular}[c]{@{}c@{}}( arraytype :ndims :layout \\ ( int32 ctype: real ) )\end{tabular}                           & VrArrayI32                       \\ \hline
-\begin{tabular}[c]{@{}c@{}}Int64 \\ Array\end{tabular}                     & REAL       & \begin{tabular}[c]{@{}c@{}}( arraytype :ndims :layout \\ ( int32 ctype: real ) )\end{tabular}                           & VrArrayI64                       \\ \hline
-\multicolumn{1}{|c|}{\begin{tabular}[c]{@{}l@{}}Bool\\ Array\end{tabular}} & REAL       & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}( arraytype :ndims :layout \\ ( int32 ctype: real ) )\end{tabular}}      & \multicolumn{1}{c|}{VrArrayB}    \\ \hline
-\end{tabular}
-\caption[Array Types]{ArrayType map. The table shows the VrArray types the ArrayTypes in VRIR are mapped to.}
-\label{tab:arrayTypeMap}
-\end{table}
-
-\begin{table}[htbp]
-\centering
-\begin{tabular}{|c|c|}
-\hline
-VrArray Type & Data Field Type \\ \hline
-VrArrayF64   & double          \\ \hline
-VrArrayF32   & float           \\ \hline
-VrArrayCF64  & double complex  \\ \hline
-VrArrayCF32  & float complex  \\ \hline
-VrArrayI64   & long            \\ \hline
-VrArrayI32   & int             \\ \hline
-VrArrayB     & bool            \\ \hline
-\end{tabular}
-\caption[Data field types of different VrArrays]{Data field types of different VrArrays. Table depicting the types of the data field for different VrArray types.}
-\label{tab:arrayDataMap}
-\end{table}
 Unlike array-based languages, C++ arrays do not store additional information such as the number of dimensions or the sizes of each dimensions. This information is useful while performing various operations such as multiplication, addition etc and hence it was necessary for us to store it. One solution was to store this information separately. However, this approach increases the number of parameters that need to be passed to functions implementing array operations. Moreover, when assigning to an array additional code that needs to be generated to update the dimension sizes and the number of dimensions. Hence, we implemented structs for arrays of all the data types supported by VRIR. We call the structs collectively as VrArrays. The equivalent VrArrays for different array types are shown in table \ref{tab:arrayTypeMap}.
 
 \subsection{Void Type}
-\begin{table}[htbp]
-\centering
-\begin{tabular}{|c|c|}
-\hline
-Void Type & Generated Void \\ \hline
-( void)   & void           \\ \hline
-\end{tabular}
-\caption[voidTypeMapping]{The table describes the generated C++ code for a void type.}
-\label{tab:voidTypeMap}
-\end{table}
-The void type is used in most cases inside a Func Type to convey the absence of either input or output parameters. The void type is mapped to a simple `void' in C++. Table \ref{tab:voidTypeMap} shows the mapping
+The void type is used in most cases inside a Func Type to convey the absence of either input or output parameters. The void type is mapped to a simple `void' in C++.
 \subsection{Tuple Type}
 Tuple types are used to define data structures which can have data of different types. While generating C++ code, the tuple types are used to generate structs that are in turn used to support data structures containing heterogenous data.
 \subsection{Func Type}
@@ -243,10 +234,19 @@ Func types are associated with function definitions and function handles. They c
 Modules are top-level constructs in VRIR. They contain one or more functions which have to be compiled to C++. A module also has an attribute called indexing which defines the indexing scheme. The indexing scheme can either be 0 or 1 indexing. More details about how the indexing attribute is used can be found in section \ref{subsec:basicindexing}.
 \section{Functions} 
 \label{sec:functions}
+Functions in VRIR are compiled to separate functions in C++. The function node in VRIR has multiple children all of which are required to generate the C++ code for the function. The list of children node of the function node and their role in the code generation process is as follows :
+\begin{itemize}
+\item Name : The function name represents the name of the function. A C++ function of the same name is generated.   
+\item Arglist : The arglist is a list of integers which are the Ids of the input arguments in the symbol table.
+\item Func type : The Func type is used for generating the input argument types and the return type.
+\item Body : The body represents the body of the function. It consists of a list of statements. 
+\end{itemize}
+The table \ref{tab:funcTypeMap} depicts how a function node in VRIR is converted to a C++ function. The function babai returns an array of type VrArrayF64 and takes as input two arrays of type VrArrayF64.
+The return type of the function is determined using the outtype node inside the funcType node. The names and types of the input parameters are determined using the arglist. The ids in the arglist are used to look up the names and types of the input arguments. 
 \begin{table}[htbp]
 \begin{tabular}{|l|l|}
 \hline
-\multicolumn{1}{|c|}{Func Type}                                                                                                                                                                                                                                       & \multicolumn{1}{c|}{Generated Function}                                                          \\ \hline
+\multicolumn{1}{|c|}{Func Type}                                                                                                                                                                                                                                       & \multicolumn{1}{c|}{Generated Function}                                                          \\ \hhline{|=|=|}
 \begin{tabular}[c]{@{}l@{}} (function babai \\
    (functype \\
    (intypes \\
@@ -264,14 +264,7 @@ Modules are top-level constructs in VRIR. They contain one or more functions whi
 \caption[funcTypeMap]{The table shows an example func type and the equivalent function signature that was generated using the func type.}
 \label{tab:funcTypeMap}
 \end{table}
-Functions in VRIR are compiled to separate functions in C++. The function node in VRIR has multiple children all of which are required to generate the C++ code for the function. The list of children node of the function node and their role in the code generation process is as follows :
-\begin{itemize}
-\item Name : The function name represents the name of the function. A C++ function of the same name is generated.   
-\item Arglist : The arglist is a list of integers which are the Ids of the input arguments in the symbol table.
-\item Func type : The Func type is used for generating the input argument types and the return type.
-\item Body : The body represents the body of the function. It consists of a list of statements. 
-\end{itemize}
-The table \ref{tab:funcTypeMap} depicts how a function node in VRIR is converted to a C++ function.
+
 \subsection{Return types in VRIR}
 \begin{lstlisting}[float,language=c,caption={Generated structure to handle multiple returns.},label={lst:multReturn}]
 //Structure definition
@@ -293,6 +286,13 @@ C++ only permits single return types. On the other hand, VRIR supports multiple 
 \section{Statements}
 VRIR supports various statements such as assignments, for-loops, while-loops etc. Most of the statements are directly supported in C++. The assignment, for and return statements have special cases which need to be supported. VRIR also supports the parallel for statement. This statement is compiled to an equivalent for loop with OpenMP pragmas in C++.
 \subsection{Assignment Statement}
+
+
+
+While generating C++ code for the assignment statement, we had to take into account different variations of the statement as well cases requiring generation of additional code. Different variations include statements with an array slice operation on the left hand side, statements containing function calls on the right hand side which have multiple returns etc. 
+
+\subsubsection{Simple Assignment Statements}
+Simple assignment statements are used when the left hand side is a name expression or an index expression without the array slice operator. The number of expressions on the left hand side can not be more than one. An example of a simple assignment statement is given in table \ref{tab:simpleAssignment}. The example contains an assignment to a scalar double variable temp. The right hand side is a simple index expression with a single index i. The index is subtracted by one because the array was originally one-indexed in the source language. Table \ref{tab:simpleAssignment} gives a complete code of the assignment statement. Subsequent examples of will have code with parts that are not relevant to replaced with a statement inside chevrons which describes that particular part of the code.
 	\begin{table}[htbp]
 	\begin{tabular}{|l|l|}
 					\hline
@@ -333,7 +333,8 @@ temp = VR_GET_DATA_F64(A)[(i - 1)];
 \caption[Simple Assignment Statement]{ The table shows an example of the simple assignment statement in VRIR and the equivalent C++ code that is generated from it.}
 \label{tab:simpleAssignment}
 \end{table}
-
+\subsubsection{Assignment Statements with Array Slice set}
+In assignment statements which fall under this category, the left hand side expression is an index expression with at least one slice index. More information about slice indices can be found in subsection \ref{subsec:advancedindexing}. The right hand side can be any expression. The array slice set operation allows a region of the array to be assigned values. Since C++ does not support array slicing, we have provide a function in the runtime library which implements it. During code generation, the assignment statement is compiled to the function implementing array slice set. The parameters to this call are the array variable of index expression on the left hand side, the right hand side expression and the set of indices which define the region of the array to which the values have to be assigned to. The indices are converted to VrIndex structs. More information on VrIndex can be found sub-section \ref{subsubsec:vrindex}. Table \ref{tab:sliceAssign} shows a VRIR representation with a slice operation on the left hand side and the equivalent C++ code that is generated. The table gives an example of a slice operation with a single index. The slice of the array rrk starting from (k+1) and ending at n is assigned the values of the right hand side expression. The third parameter of VrIndex gives the step value for the range. In this case the step value is one and hence every element from (k+1)  to n is considered. 
 \begin{table}[htbp]
 \begin{tabular}{|c|c|}
 \hline
@@ -388,7 +389,8 @@ rrk.setArraySliceSpec
 \caption[Assignment with array slice set]{Table shows VRIR with array slicing on the LHS and the equivalent C++ code that is generated.}
 \label{tab:sliceAssign}
 \end{table}
-
+\subsubsection{Assignment statements that can be optimised  for redundant memory allocations}
+One of the contributions of the thesis was an optimisation where redundant memory allocations during operations on arrays are removed. This optimisation is implemented by passing the array to which the result is assigned to, as a parameter to the function implementing the array operation. This array is the left hand side expression of the assignment statement whereas the right hand side expression is the function call. More information on the optimisation can be found in section \ref{sec:memoptimise}. Table \ref{tab:memAssignment} gives an example of a VRIR representation which can potentially be optimised and the generated C++ code.  The example in the table is a call to the matrix multiplication function which is defined inside the runtime library. The call takes as input three BLAS specific parameters, two double arrays and a reference to another double array. The two double arrays are the ones present on the RHS on which the matrix multiplication is performed and third array whose reference is passed to the function is the array to which the output of the matrix multiplication operation is assigned to. Since the LHS is passed as input, no assignment operator(=) is used.
 \begin{table}[htbp]
 \begin{tabular}{|c|c|}
 \hline 
@@ -439,6 +441,8 @@ BlasDouble::mmult
 \label{tab:memAssignment}
 \end{table}
 
+\subsubsection{Assignment Statements with multiple LHS expressions}
+Assignment statements can have multiple expressions on the LHS when the RHS expression call to a function  with multiple returns. As mentioned in section \ref{sec:functions}, functions with multiple returns are handled by returning a struct containing the return values. In the assignment statement the expression on the LHS are replaced by a struct variable and additional code is generated to assign the values in the struct to the LHS expressions. Table \ref{tab:multAssignment} shows the C++ code that is generated from VRIR. The example shown in the table shows a variable that is of the structure type struct\_spqr\_ret which is assigned the value of the RHS expression. The different variables are then assigned the values in the different fields of the structures in the subsequent statements.
 \begin{table}[htbp]
 \begin{tabular}{|c|c|}
 \hline 
@@ -501,17 +505,6 @@ rn = var_spqr1.ret_data3;
 \caption[Assignment with multiple LHS expressions]{Table shows VRIR with multiple expressions on the LHS and the equivalent C++ code that is generated.}
 \label{tab:multAssignment}
 \end{table}
-While generating C++ code for the assignment statement, we had to take into account different variations of the statement as well cases requiring generation of additional code. Different variations include statements with an array slice operation on the left hand side, statements containing function calls on the right hand side which have multiple returns etc. 
-
-\subsubsection{Simple Assignment Statements}
-Simple assignment statements are used when the left hand side is a name expression or an index expression without the array slice operator. The number of expressions on the left hand side can not be more than one. An example of a simple assignment statement is given in table \ref{tab:simpleAssignment}. The example contains an assignment to a scalar double variable temp. The right hand side is a simple index expression with a single index i. The index is subtracted by one because the array was originally one-indexed in the source language. Table \ref{tab:simpleAssignment} gives a complete code of the assignment statement. Subsequent examples of will have code with parts that are not relevant to replaced with a statement inside chevrons which describes that particular part of the code.
-\subsubsection{Assignment Statements with Array Slice set}
-In assignment statements which fall under this category, the left hand side expression is an index expression with atleast one slice index. More information about slice indices can be found in subsection \ref{subsec:advancedindexing}. The right hand side can be any expression. The array slice set operation allows a region of the array to be assigned values. Since C++ does not support array slicing, we have provide a function in the runtime library which implements it. During code generation, the assignment statement is compiled to the function implementing array slice set. The parameters to this call are the array variable of index expression on the left hand side, the right hand side expression and the set of indices which define the region of the array to which the values have to be assigned to. The indices are converted to VrIndex structs. More information to VrIndex can be found sub-section \ref{subsubsec:vrindex}. Table \ref{tab:sliceAssign} shows a VRIR representation with a slice operation on the left hand side and the equivalent C++ code that is generated. The table gives an example of a slice operation with a single index. The slice of the array rrk starting from (k+1) and ending at n is assigned the values of the right hand side expression. The third parameter of VrIndex gives the step value for the range. In this case the step value is one and hence every element from (k+1)  to n is considered. 
-\subsubsection{Assignment statements that can be optimised  for redundant memory allocations}
-One of the contributions of the thesis was an optimisation where redundant memory allocations during operations on arrays are removed. This optimisation is implemented by passing the array to which the result is assigned to, as a parameter to the function implementing the array operation. This array is the left hand side expression of the assignment statement whereas the right hand side expression is the function call. More information on the optimisation can be found in section \ref{sec:memoptimise}. Table \ref{tab:memAssignment} gives an example of a VRIR representation which can potentially be optimised and the generated C++ code.  The example in the table is a call to the matrix multiplication function which is defined inside the runtime library. The call takes as input three BLAS specific parameters, two double arrays and a reference to another double array. The two double arrays are the ones present on the RHS on which the matrix multiplication is performed and third array whose reference is passed to the function is the array to which the output of the matrix multiplication operation is assigned to. Since the LHS is passed as input, no assignment operator(=) is used.
-
-\subsubsection{Assignment Statements with multiple LHS expressions}
-Assignment statements can have multiple expressions on the LHS when the RHS expression call to a function  with multiple returns. As mentioned in section \ref{sec:functions}, functions with multiple returns are handled by returning a struct containing the return values. In the assignment statement the expression on the LHS are replaced by a struct variable and additional code is generated to assign the values in the struct to the LHS expressions. Table \ref{tab:multAssignment} shows the C++ code that is generated from VRIR. The example shown in the table shows a variable that is of the structure type struct\_spqr\_ret which is assigned the value of the RHS expression. The different variables are then assigned the values in the different fields of the structures in the subsequent statements.
 \subsection{For Statement}
 \begin{table}[htbp]
 \begin{tabular}{|c|c|}
@@ -641,6 +634,9 @@ return cap;
 \caption[Simple return statement]{The table shows a return statement with a single return value and its equivalent C++}
 \label{tab:simpleReturn}
 \end{table}
+
+For return statements with single return variable, a simple return statement is generated. The expressions inside the return statement are replaced with their Ids inside the symbol table. If the expressions are not name expressions, they are assigned to a temporary variables which are then returned. Table \ref{tab:simpleReturn} gives an example of a simple return statement. In the example, the return statement returns a variable called cap. 
+Since C++ does not support return statements with multiple variables, we return a struct instead. The values of the variables are passed as parameters to the struct's constructor. Table \ref{tab:multiReturn} gives an example of the return statement with multiple returns values. The example returns struct of type struct\_spqr\_ret. The struct object is created by means of a constructor that takes as parameters the variables that need to be returned. 
 \begin{table}[htbp]
 \centering
 \begin{tabular}{|l|l|}
@@ -683,12 +679,11 @@ return struct_spqr_ret
 } \\
 \hline
 \end{tabular}
-\caption[Simple return statement]{The table shows a return statement with a single return value and its equivalent C++}
+\caption[Multiple return statement]{The table shows a return statement with multiple returns and its equivalent C++}
 \label{tab:multiReturn}
 \end{table}
-For return statements with single return variable, a simple return statement is generated. The expressions inside the return statement are replaced with their Ids inside the symbol table. If the expressions are not name expressions, they are assigned to a temporary variables which are then returned. Table \ref{tab:simpleReturn} gives an example of a simple return statement. In the example, the return statement returns a variable called cap. 
-Since C++ does not support return statements with multiple variables, we return a struct instead. The values of the variables are passed as parameters to the struct's constructor. Table \ref{tab:multiReturn} gives an example of the return statement with multiple returns values. The example returns struct of type struct\_spqr\_ret. The struct object is created by means of a constructor that takes as parameters the variables that need to be returned. 
 \subsection{If Statement}
+The if statement is compiled to a condition statement, an if block and an else block if it exists.  Table \ref{tab:ifStmt} gives an example of the if statement.
 \begin{table}[htbp]
 \centering
 \begin{tabular}{|l|l|}
@@ -728,57 +723,8 @@ VRIR &  Generated C++ \\
 \caption[If Statement Example]{The table shows an example of a if statement in VRIR and its equivalent C++ code.}
 \label{tab:ifStmt}
 \end{table}
-The if statement is compiled to a condition statement, an if block and an else block if it exists.  Table \ref{tab:ifStmt} gives an example of the if statement.
-\subsection{Break Statement}
-\begin{table}[htbp]
-\centering
-\begin{tabular}{|l|l|}
-\hline
-
-VRIR &  Generated C++ \\
-\hline
-{
-\begin{lstlisting}[language=lisp,frame=none, numbers=none]
-(break)
-\end{lstlisting}
-}
-&
-{
-\begin{lstlisting}[language=c,frame=none, numbers=none]
-break;
-\end{lstlisting}
-} \\
-\hline
-\end{tabular}
-\caption[Break statement example]{The table shows an example of a break statement in VRIR and its equivalent C++ break statement}
-\label{tab:breakStmt}
-\end{table}
-The break statement of VRIR is compiled to the break statement in C++. Table \ref{tab:breakStmt} gives an example of the continue statement.
-\subsection{Continue Statement}
-\begin{table}[htbp]
-\centering
-\begin{tabular}{|l|l|}
-\hline
-
-VRIR &  Generated C++ \\
-\hline
-{
-\begin{lstlisting}[language=lisp,frame=none, numbers=none]
-(continue)
-\end{lstlisting}
-}
-&
-{
-\begin{lstlisting}[language=c,frame=none, numbers=none]
-continue;
-\end{lstlisting}
-} \\
-\hline
-\end{tabular}
-\caption[While statement example]{The table shows an example of a while statement in VRIR and its equivalent C++ while statement}
-\label{tab:continueStmt}
-\end{table}
-The continue statement of VRIR is compiled to the continue statement in C++. Table \ref{tab:continueStmt} gives an example of the continue statement.
+\subsection{Break and Continue Statement}
+The break  and continue statements of VRIR are compiled to the break and continue statements in C++.
 \subsection{While Statement}
 \begin{table}[htbp]
 \centering
@@ -808,9 +754,9 @@ while(condition) {
 \hline
 \end{tabular}
 \caption[While statement example]{The table shows an example of a while statement in VRIR and its equivalent C++ while loop}
-\label{tab:continueStmt}
+\label{tab:while}
 \end{table}
-The while statement is compiled to a while loop in C++. The test node of the statement is used to generate the while condition. Statements inside the body node are compiled to the statements inside the loop body.
+The while statement is compiled to a while loop in C++. The test node of the statement is used to generate the while condition. Statements inside the body node are compiled to the statements inside the loop body. Table \ref{tab:while} gives an example of the while statement.
 \subsection{Parallel For Statement}
 \begin{table}[htbp]
 \centering
@@ -827,7 +773,8 @@ VRIR &  Generated C++ \\
 		)
 	)
 	(loopdomain 
-	  ( domain ( domaintype :ndims 1 (int64 :ctype 0))
+	  ( domain ( domaintype :ndims 1 
+		(int64 :ctype 0))
 		(range :exclude %0 
    			(start  
    				(realconst :ival 1
@@ -849,11 +796,11 @@ VRIR &  Generated C++ \\
 &
 {
 \begin{lstlisting}[language=c,frame=none, numbers=none]
-#pragma omp parallel for  \
+#pragma omp parallel for\
 	shared(A,B,c)
  for( i = 0; 
-		i < static_cast<long>(m);
-		i++) {
+	    i < m;
+      i++) {
 	<Loop Body>
  }
 

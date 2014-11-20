@@ -16,6 +16,11 @@ The header files are included using the "include" preprocessor directive.
 \end{lstlisting}
 Listing \ref{lst:glueCodeHeader} gives an example of the header files that are generated. The header file "mex.h" provides the set of declarations for the MEX API functions. The header files matrix\_ops.hpp library\_ops.hpp contain class and function declarations of our runtime library. Function declarations of the generated code are provided by matmul\_pImpl.hpp. The file omp.h is provided for OpenMP functions and directives. 
 \section{Generating mexFunction}
+The entry point for any shared library that can be called from \matlab is called mexFunction. Listing \ref{lst:mexFunction} gives an example of the mexFunction. The function returns void. It takes four input arguments. The first argument nlhs defines the number of output parameters of the function and the second argument is an array of output paramaters. The output parameters are of type mxArray which is a \matlab specific array representation. 
+\begin{lstlisting}[float,language=c,caption={The entry point function for the MEX API},label={lst:mexFunction}]
+void mexFunction(int nlhs, mxArray *plhs[],
+    int nrhs,const mxArray *prhs[])
+\end{lstlisting}
 \subsection{VrArrays from MxArrays}
 \subsection{Function call}
 \subsection{Handling return variables}

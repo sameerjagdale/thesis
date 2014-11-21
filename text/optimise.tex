@@ -1,11 +1,19 @@
 The primary goal of the thesis was to ensure correct compilation of code from \matlab and Python to C++. An additional goal was to improve the performance of the generated code. Initial experiments showed that turning on bounds check slowed down 6 of the 17 benchmarks and 3 of the 9 benchmarks in Python. The geometric mean of the slowdown compared to bounds check turned off was 3.92 for \matlab and 2.25 for Python. Additionally, while analysing the generated code, we found that array operations being performed inside loops were allocating memory to the same output array for every iteration. We determined that by optimising the code to eliminate bounds checks and unnecessary memory allocations, we gain a significant improvement in performance. 
 \section{BoundsChecks}
+Scientific languages like \matlab and Python support array bounds checks for indexing operations. These checks ensure that the program does not crash abruptly and instead throws an error before exiting. On the other hand, C++ does not implicitly support array bounds checks. Hence we provide bounds checks through the runtime library. \\
+Due to differences in semantics of \matlab and Python, the boundscheck implementations for both languages are different. Hence we provide different implementations for the two languages. Array growth is also carried out by the bounds check implmentation for languages that support it. However, the API for both language implementations is the same. The entry point function for bounds checks is a templated function called checkBounds. Listing \ref{lst:boundscheck} gives an example of the boundscheck function for the array c. The bounds check functions are called inside conditional blocks which allows the user to turn the checks on or off while compiling the code. The first parameter is the reference to array on which the indexing operation is performed. The second parameter is a boolean flag which is set to true if the boolean operation is on the LHS of an assignment statement. This flag is used to determine if the array should be grown when one or more indices exceed bounds. This check is only used by the \matlab implementation. The third parameter is the number of indices. This parameter is require since the function accepts variable arguments. The remaining parameters are the indices which are passed as VrIndex structs. Passing indices as VrIndex structs allows the function to handle different index types such as ranges and arrays.
+
 \begin{lstlisting}[float,language=c,caption={An example of the bounds check function call.},label={lst:boundscheck}]
 //Bounds check 
 #ifdef BOUND_CHECK
 	checkBounds<VrArrayPtrF64,double>(&c,false,2,vrIndex(i),vrIndex(j));
 #endif
 \end{lstlisting}
+
+
+However, the default bounds check function performs poorly due to dynamic memory allocation. The implementation inserts the indices into an array and performs checks while iterating over the array. Using an array simplifies the code for the checks. However, since the number of indices can vary, the array cannot be created at compile time.
+
+In order to improve performance of the bounds checks, we implemented specialised versions of the bounds check function for index operations with one, two and three indices. We also implemented three additional versions for index operations where all indices have numeric values. These specialised functions are called checkBounds\_spec. Listing \ref{lst:boundscheck_spec} shows an example of the specialised version of the bounds check function. The function is specialised for two indices, both of which have numeric values. The first two parameters denote the array and whether the operation is performed on the LHS like in the default function. The remaining two parameters are the indices. 
 \begin{lstlisting}[float,language=c,caption={An example of the specialised bounds check function call},label={lst:boundscheck_spec}]
 //Bounds check 
 #ifdef BOUND_CHECK
@@ -13,12 +21,18 @@ The primary goal of the thesis was to ensure correct compilation of code from \m
 		static_cast<dim_type>(i),static_cast<dim_type>(j));
 #endif
 \end{lstlisting}
-Scientific languages like \matlab and Python support array bounds checks for indexing operations. These checks ensure that the program does not crash abruptly and instead throws an error before exiting. On the other hand, C++ does not implicitly support array bounds checks. Hence we provide bounds checks through the runtime library. \\
-Due to differences in semantics of \matlab and Python, the boundscheck implementations for both languages are different. Hence we provide different implementations for the two languages. Array growth is also carried out by the bounds check implmentation for languages that support it. However, the API for both language implementations is the same. The entry point function for bounds checks is a templated function called checkBounds. Listing \ref{lst:boundscheck} gives an example of the boundscheck function for the array c. The bounds check functions are called inside conditional blocks which allows the user to turn the checks on or off while compiling the code. The first parameter is the reference to array on which the indexing operation is performed. The second parameter is a boolean flag which is set to true if the boolean operation is on the LHS of an assignment statement. This flag is used to determine if the array should be grown when one or more indices exceed bounds. This check is only used by the \matlab implementation. The third parameter is the number of indices. This parameter is require since the function accepts variable arguments. The remaining parameters are the indices which are passed as VrIndex structs. Passing indices as VrIndex structs allows the function to handle different index types such as ranges and arrays. \\
-However, the default bounds check function performs poorly due to dynamic memory allocation. The implementation inserts the indices into an array and performs checks while iterating over the array. Using an array simplifies the code for the checks. However, since the number of indices can vary, the array cannot be created at compile time.\\
-In order to improve performance of the bounds checks, we implemented specialised versions of the bounds check function for index operations with one, two and three indices. We also implemented three additional versions for index operations where all indices have numeric values. These specialised functions are called checkBounds\_spec. Listing \ref{lst:boundscheck_spec} shows an example of the specialised version of the bounds check function. The function is specialised for two indices, both of which have numeric values. The first two parameters denote the array and whether the operation is performed on the LHS like in the default function. The remaining two parameters are the indices. 
 \section{Bounds check elimination}
-Slowdown when the bounds checks was identified to be higher when the checks are performed inside loop bodies. In such cases, the checks are performed for every loop iteration resulting in the slowdown. One technique to improve performance of the code would be to perform the checks once outside the loop. Two versions of the loop would be generated. If all the checks passed, a checks free version would be executed whereas a version with all the checks turned on would be executed if one or more of the checks failed. This technique can be implemented on a subset of the indices known as affine indices. 
+Slowdown when the bounds checks was identified to be higher when the checks are performed inside loop bodies. In such cases, the checks are performed for every loop iteration resulting in the slowdown. Consider the example given in \ref{lst:example_optim}. The example contains an index expression on the array y inside a loop. The index expression consists of a single index (k-1). The loop has a starting value of 1 and a final value of n-1. The value of the loop variable k is incremented by one with every iteration. As we can see, the index is a linear function of the loop variable k. The loop bounds are not modified inside the loop. Moreover, the step value of the loop is a constant and hence it can be inferred that the loop direction is upwards, that is, the loop iterates from a smaller start value to a larger stop value. By replacing the loop variable by the start and stop expressions of the loop, we get the lower and upper bounds of the index respectively. Thus the smallest value of the index inside the loop will be (1-1), that is, 0 and the largest value of the index will be ((n-1) - 1), that is, (n-2). Since we know what the lower and upper bound of the index, we can check whether these values exceed the array size or are less than the lowest index value supported by indexing scheme, outside the loop. If the index is valid, the there is no need to perform bounds checks inside the loop. Thus this technique would improve the performance of the program. We use this optimisation technique, on a subset of the indices known as affine indices. 
+\begin{lstlisting}[float,language=c,caption={Example C++ for loop with array index expressions},label={lst:example_optim}]
+   for(k=1;k<=(n-1);k=k+1)
+       {
+  #ifdef BOUND_CHECK
+          checkBounds_spec<VrArrayPtrF64,double>(&y,false,
+				static_cast<dim_type>(k-1));
+  #endif
+          vr_temp12 = VR_GET_DATA_F64(y)[(k - 1)];
+      }
+\end{lstlisting}
 \subsection{Affine indices}
 A function of one or more variables is considered to be affine if it can be expressed as a sum of constant and constant multiples of the variables. Equation \ref{eq:affineIndex} gives a mathematical representation of affine functions. 
 \begin{equation}
@@ -88,7 +102,13 @@ Listing \ref{lst:boundsoptimBlock} gives an example of the if statement generate
 \end{lstlisting}
 \section{Eliminating unnecessary memory allocations}
 \label{sec:memoptimise}
-Array operations and array slicing are implemented through functions in the runtime library. The output of these operations is written to a new array created inside the functions. Many times these operations are performed inside loops and the output is assigned to the same array variable. However, runtime memory allocation in expensive and hence performance of the code can be improved by reusing the memory. Through this optimisation, we try to eliminate memory allocations when they are not required and instead reuse previously allocated memory. 
+Array operations and array slicing are implemented through functions in the runtime library. The output of these operations is written to a new array created inside the functions. Many times these operations are performed inside loops and the output is assigned to the same array variable. However, runtime memory allocation in expensive. Consider the example in Listing \ref{lst:memOptimiseExample}. The example contains an array operation, scal\_minus, which subracts a scalar vr\_temp28  from every element in the array Rx and assigns it to an array that is created inside the function. The output of this operation is assigned to another array drx. Since this function is called inside the loop, a new array would be created on every loop iteration. However output array that is created will always be assigned to drx. The number of memory allocations could be reduced by reusing the memory that was assigned to drx during the first iteration for the subsequent iterations. Memory can only be reused if the size of drx is greater than or equal to than the output of scal\_minus. Hence, the functions will have to be modified to perform a check for ensuring memory can be reused. Moreover, the function signature will have to to be modified to add a reference to the array to which the output is assigned, in this case, drx. Another alternative and is to implement a specialised function for the optimisation which satisfies the above mentioned criterion. We chose the second alternative for the optimisation. 
+\begin{lstlisting}[float,language=c,caption={An example of an array operation which is optimised },label={lst:memOptimiseExample}]
+for(k=1;k<= n;k=k+static_cast<long>(1)) {
+	drx = BlasDouble::scal_minus(Rx,vr_temp28);
+}
+\end{lstlisting}
+
 \subsection{Supported Functions}
 \begin{table}[htbp]
 \centering
@@ -97,7 +117,7 @@ Array operations and array slicing are implemented through functions in the runt
 Function Name & Function description         & Scalar version \\ \hline
 mmult         & Matrix multiplication        & Yes            \\ \hline
 scal\_mult    & Scalar Matrix Multiplication & No             \\ \hline
-vec\_add      & Array Addiction              & No             \\ \hline
+vec\_add      & Array Addition              & No             \\ \hline
 vec\_copy     & Array Copy                   & No             \\ \hline
 vec\_sub      & Array Subtraction            & No             \\ \hline
 scal\_add     & Scalar Array Addition        & No             \\ \hline
@@ -112,7 +132,6 @@ sliceArray          & Get array slice        & No            \\ \hline
 \end{table}
 Since a check for sufficient memory allocation needs to be made inside the function, a reference to the output array also needs to the be passed. Hence we implement specialised functions for this optimisation. The Supported library functions include many of the  array operations described in Subsection \ref{subsec:arrayOps} and a few other library functions. For dimension collapsing functions we support cases where a scalar value is returned. Table \ref{tab:memoptimiselist} gives a list of functions for which an implementation support the memory optimisation exists. 
 \subsection{Checking for Sufficient Memory}
-
 As mentioned before, the specialised functions accept a reference to the output array as an input parameter. The output array is then checked to determine whether the maximum number of elements that the array can hold is greater than or equal to the number of elements of the output of the operation performed by the function. The number of elements are calculated by taking the product of the dimensions of the array. If the memory is sufficient, no memory is allocated to the array whereas memory is allocated if it is not sufficient. In either case, the dimensions are modified to be equal to the expected dimensions of the output of the array operation.   
 \subsection{Code Generation}
 \begin{table}[htbp]

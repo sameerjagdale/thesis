@@ -1,0 +1,108 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Chaprefs.sty - Style file to produce Reference sections on a per
+%                Chapter bases (using BibTeX)
+%
+% Author: Peter J. Knaggs,  School of Computing and Mathematics,
+%         Teesside Polytechnic, Middlesbrogh, Cleveland, England.
+%
+%=======================================================================
+ 
+%
+% Define two variables:
+%       \bib@sty        - Holds the selected bibliography style
+%       \bib@name       - Holds the name of the current \include file
+%
+ 
+\def\bib@sty{plane}
+\def\bib@name{\jobname}
+ 
+%
+% Redefine \include to save the name of the included file in the variable
+% \bib@name.  This definition simply extends the LaTeX definition by
+% redefining \include to call \@include, this is taken from the \include
+% definition in LaTeX.TeX
+%
+ 
+\def\include#1{\include@#1 }
+\def\include@#1 {\def\bib@name{#1}\@include#1 }
+ 
+%
+% Define a new `Preamble' flag to indicate chapter reference are required.
+% This is required as the contents of the .aux files is diferent dependent
+% on the state of this flag.
+%
+% The flag is initilay set to false.  Ie., do not produce chapter reference,
+% but do produce a bibliography chapter.
+%
+% The preable command \chaprefs is defined to switch the flag to true.  Ie.,
+% produce chapter reference, but not a bibliography chapter.
+%
+ 
+\newif\if@chpref \@chpreffalse
+\def\chaprefs{\@chpreftrue}
+ 
+%
+% Redefine \bibliographystyle to save the selected style in the variable
+% \bib@sty.  This will be ouput to the .aux file for each included file.
+% Hence only one \bibliographystyle command is required.
+%
+ 
+\def\bibliographystyle#1{
+    \if@filesw\immediate\write\@auxout{\string\bibstyle{#1}}\fi
+    \def\bib@sty{#1}
+}
+ 
+%
+% Redefine \bibliography to use new factoring of the command.
+% It redefineds the constant \@Ref as used in \thebiblography to add a
+% "References" section, such that it now adds a "Biblography" chapter.
+%
+ 
+\def\bibliography#1{\if@filesw\immediate\write\@auxout{\string\bibdata{#1}}
+         \def\@Ref{\@bib} \@input{\jobname.bbl} \fi }
+ 
+%
+% define \references to write the \bibstyle and \bibdata commands to the
+% current .aux file.  It then inputs the current .bbl file if it exists.
+%
+ 
+\def\references#1{\if@filesw\if@chpref\immediate\write\@auxout
+         {\string\bibstyle{\bib@sty}} \write\@auxout{\string\bibdata{#1}}
+         \fi \@input{\bib@name.bbl} \fi }
+ 
+%
+% Define two functions:
+%       \@Ref to add a "References" section to the current % chapter.
+%       \@bib to add a "Bibliography" chapter to the document.
+%
+% It is assumed that the bibliography will be at the end of the document.
+% Ie., no \references commands are given after the \bibliography command.
+%
+ 
+\def\@Ref{\section{References}}
+\def\@bib{\chapter*{Bibliography\@mkboth{BIBLIOGRAPHY}{BIBLIOGRAPHY}}
+         \addcontentsline{toc}{chapter}{Bibliography} }
+ 
+%
+% At the start of a .bbl file is the command \thebibliography.  This has
+% been modified to add a "References" section to the current chapter.  Note,
+% the definition of \thebibliography is taken from the ucthesis document
+% style.
+%
+% When the \bibliography command is used the definition of \@Ref is altered
+% to add a "Bibliography" chapter.  This definition is not changed back,
+% thus the \bibliography command must only be given after all \references
+% commands have been processed.
+%
+ 
+\def\thebibliography#1{\@Ref\list{[\arabic{enumi}]}
+    {\settowidth\labelwidth{[#1]}\leftmargin\labelwidth
+    \advance\leftmargin\labelsep
+    \usecounter{enumi}}
+    \def\newblock{\hskip .11em plus .33em minus .07em}
+    \sloppy\clubpenalty4000\widowpenalty4000
+    \sfcode`\.=1000\relax}
+ 
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

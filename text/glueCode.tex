@@ -21,7 +21,55 @@ The entry point for any shared library that can be called from \matlab is called
 void mexFunction(int nlhs, mxArray *plhs[],
     int nrhs,const mxArray *prhs[])
 \end{lstlisting}
-\subsection{VrArrays from MxArrays}
-\subsection{Function call}
-\subsection{Handling return variables}
-\subsection{Converting VrArrays to mxArrays}
+\subsection{Generating VrArrays from mxArrays}
+The arrays in the generated functions are represented as VrArrays. VrArrays are a \velocty specific representation of arrays. VrArrays contain the array data as well as metadata such as the number of dimensions and the number of dimensions. More information on VrArrays can be found in Subsection \ref{subsec:vrarrays}. VrArrays were used in place of the language specific representation because accessing data and metadata of mxArrays was expensive. Since the arrays are passed as mxArrays from \matlab and the arrays are represented as VrArrays in the generated code, the glue code has to convert the mxArrays passed as input from \matlab to VrArrays before they can be passed to the generated functions. 
+
+We have implemented methods which convert mxArrays to VrArrays. There is a separate method for each VrArray type. Listing \ref{lst:getVrArray} gives an example of the function used to convert mxArrays to VrArrays. The function is called getVrArrayF64 which takes a pointer to a mxArray as input and returns a VrArrayF64, an array of doubles. Table \ref{tab:getVrArray} gives a list of all the functions for converting VrArrays to different mxArrays. 
+
+\begin{lstlisting}[float,language=c,caption={Converting mxArrays to VrArrays},label={lst:getVrArray}]
+VrArrayF64 inputData1 = getVrArrayF64(rhs[1]);
+\end{lstlisting}
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+Function       & Description                         \\ \hhline{|=|=|}
+getVrArrayF64  & Returns an array of doubles         \\ \hline
+getVrArrayF32  & Returns an array of floats          \\ \hline
+getVrArrayCF64 & Returns an array of complex doubles \\ \hline
+getVrArrayCF32 & Returns an array of complex floats  \\ \hline
+getVrArrayI32  & Returns an array of 32 bit integers \\ \hline
+getVrArrayI64  & Returns an array of 64 bit integers  \\ \hline
+\end{tabular}
+\caption{List of functions used to convert mxArrays to VrArrays.}
+\label{tab:getVrArray}
+\end{table}
+
+There is an additional overhead while converting from complex mxArrays to complex VrArrays because the representation of the data in the two array types is different. mxArrays store the real and imaginary data as separate arrays. On the other hand, in VrArrays, the real and imaginary data is interleaved. Thus, for every element of the array, the real value is immediately followed by the imaginary value.
+
+Scalar values are also passed as mxArrays by \matlab where as they are represented using the C++ primitive types. The glue code also converts the mxArrays to scalar types when required. Listing \ref{lst:getScalar} gives an example of the conversion. The example shows a mxArray pointer rhs[5] being converted to a scalar value inputData5. The MEX function, mxGetScalar returns a scalar double value. A cast is required for all types other than double.
+\begin{lstlisting}[,language=c,caption={Converting mxArrays to scalars},label={lst:getScalar}]
+ double inputData5 = static_cast<double>(mxGetScalar(rhs[5]));
+\end{lstlisting}
+
+\subsection{Function Call}
+Once all the input parameters are converted to VrArrays or C++ primitive types, we make a call to the generated entry point function. The output of the function is stored in either a VrArray or a scalar variable if the function returns a single variable. Listing \ref{lst:funcCall} gives an example of the generated function call. The listing shows a call to the function babai which returns a VrArrayF64 which is assigned to the variable retVal.
+\begin{lstlisting}[language=c,caption={Call to generated function},label={lst:funcCall}]
+VrArrayF64 retVal = babai(inputData0,inputData1);
+\end{lstlisting}
+
+The generated function can also return multiple variables of different types. In this case the generated function packages the  variables into a struct and return the struct. More information about multiple returns can be found in Subsection \ref{subsec:multreturn}. Listing \ref{lst:funcCallMult} gives an example of a call to a function with multiple returns. The function name is nb1d which takes 7 inputs and returns a struct of type struct\_nbody1d\_ret retVal.
+\begin{lstlisting}[language=c,caption={Call to generated function},label={lst:funcCallMult}]
+struct_nbody1d_ret retVal = nbody1d(inputData0,inputData1,
+							inputData2,inputData3,
+							inputData4,inputData5,inputData6);
+\end{lstlisting}
+\subsection{Converting to mxArrays}
+The output of the generated function has to be returned to \matlab. The output can consist of a single or multiple variables. The output can be returned via the array plhs. As mentioned earlier, plhs is an array of mxArray pointers. Hence the output of the generated function, which is either a VrArray or a C++ primitive type has to be converted to mxArrays and stored as successive plhs elements. We use MEX API functions to do the same. 
+
+In case of VrArrays, We first have to create an array of the required size. We do this using the function mxCreateNumericArray. This function takes as input, the number of dimensions, an array of dimension sizes, the data type of the array and its complexity. We use the ndims and dims fields from the VrArray to specify the number of dimensions and the sizes of each dimensions. Once the array is created, we set the mxArray data by passing the pointer to the data inside the VrArray to the the function mxSetData.
+
+For scalar values, we use the MEX function mxCreateNumericMatrix which accepts the row and column sizes as well as the complexity and  the type of the array.We set the row and column sizes as one. We then fetch a pointer to the data of the newly created mxArray and set the zero$^{th}$ element to the scalar value. 
+
+If the function returns multiple output values, each data member of the return struct is used to create an mxArray which is then assigned to successive indices of plhs. 

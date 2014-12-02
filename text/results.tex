@@ -204,7 +204,10 @@ nb1d      & 0.96    \\ \hline
 \label{tab:cpvscwo}
 \end{table}
 
+We also calculated the speedup of the generated C code with all optimisations enabled compared to the generated C code without checks. The geometric mean of the speedup compared to the C code without checks is 1.19. The maximum speedup compared to that of  2.32 is given by the matmul benchmark. Not all benchmarks show significant speedups. The performance of such of benchmarks can be improved by optimising the builtin implementations provided by the runtime library.
 
+We observed higher speedups of the generated C code with all optimisations enabled compared to the generated C code with checks enabled. This is because the bounds check optimisation improves peformance of the benchmarks compared to the benchmark versions when the checks are enabled. The geometric mean of the speedup is 2.74. The highest speedup of 24.24 is observed for the matmul benchmark. The matmul benchmark benefits from the boundscheck optimisation as well as parallel code generation. Table %insert ref
+shows the speedups for the generated C code with all optimisations enabled compared to both the C code with checks and without checks. 
 \subsection{Python Results}
 We ran experiments on 9 Python benchmarks. We compared the generated C code without bounds checks to Cython and the CPython interpreter. Figure \ref{fig:results_cwochecks_py} is a bar graph showing the speedup of the generated C code and the Cython code compared to the CPython interpreter. The blue bars indicate the speedup of the generated C code and the red bars indicate the speedup of the Cython code. The geometric mean of the benchmarks was 208.69. The largest speedup of 557.82  was shown by the lud benchmark. The smallest speedup of 47.11 was shown by the fft benchmark. 
 

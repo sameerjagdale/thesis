@@ -80,7 +80,7 @@ All the benchmarks were tested on a machine running GNU/Linux(3.8.0-35-generic \
 \section{Results}
 This section describes the experimental results that were obtained for \matlab and Python.
 \subsection{\matlab Results}
-We ran experiments on 17 \matlab benchmarks. We compared the C backend without bounds checks with the Mathworks' \matlab implementation and \matlab-coder. We measured the speedup of the C backend and the \matlab-coder versions compared to  Mathwork's \matlab.Figure \ref{fig:results_cwochecks} shows a bar graph with the results of the experiment. The red bars show the speedup of \matlab-coder and the blue bars show the speedup of the C backend. The geometric mean for the speedup of the C version was 6.17 as compared to the geometric mean of 3.89 for the \matlab-coder version. The largest speedup was shown by the quadrature benchmark. The benchmark was 318 times faster than Mathworks' \matlab. The benchmark consists of operations on scalar operations and hence gives a high speedup. The smallest speedup of 1.18, is given by the closure benchmark. The benchmark's computationally intensive code section is a while loop containing a matrix multiplication operation. All three versions, the C backend, Mathwork's \matlab and \matlab-coder use the Intel MKL BLAS library and hence show similiar performance. 
+We ran experiments on 17 \matlab benchmarks. We compared the C backend without bounds checks with the Mathworks' \matlab implementation and \matlab-coder. We measured the speedup of the C backend and the \matlab-coder versions compared to  Mathwork's \matlab.Figure \ref{fig:results_cwochecks} shows a bar graph with the results of the experiment. The red bars show the speedup of \matlab-coder and the blue bars show the speedup of the C backend. The geometric mean for the speedup of the C version was 6.17 as compared to the geometric mean of 3.89 for the \matlab-coder version. The largest speedup was shown by the quadrature benchmark. The benchmark was 318 times faster than Mathworks' \matlab. The benchmark consists of operations on scalar operations and hence gives a high speedup. The smallest speedup of 1.18, is given by the closure benchmark. The benchmark's computationally intensive code section is a while loop containing a matrix multiplication operation. All three versions, the C backend, Mathwork's \matlab and \matlab-coder use the Intel MKL BLAS library and hence show similiar performance. A C version of crni without checks was not generated because the benchmark contains a growing array and hence crashes if bounds checks are not enabled. 
 \begin{figure}[htbp]
 \centering
 \includegraphics[scale=0.6]{Figures/results_cwochecks.png}
@@ -92,8 +92,7 @@ For most benchmarks, our C backend was faster than \matlab-coder. The benchmarks
 
 As we can also observe \matlab-coder is shows a positive speedup on all benchmarks except for mcpi. The reason for this is that the benchmark contains a loop with random function calls inside the body. These functions return a single scalar value. However, in case of \matlab-coder, an 1x1 matrix is returned. Since a heap allocation is needed for every iteration, the benchmark is significantly slower than Mathworks' \matlab. 
 
-When comparing the execution times of the C backend with and without bounds checks, we observed that the execution times of benchmarks containing array slicing or array operations were not affected by turning the checks on. On the other hand, benchmarks consisting of simple indexing operations show a larger slowdown when array bounds checks were turned on. Figure \ref{fig:results_cwchecks} gives the execution times of the \matlab benchmarks for the C backend with and without bounds checks. As we can see, 6 of the 17 benchmarks show a slow down when bounds check are added. The benchmarks include fft, fiff, matmul, bubble, capr and dich. 
-
+When comparing the execution times of the C backend with and without bounds checks, we observed that the execution times of benchmarks containing array slicing or array operations were not affected by turning the checks on. On the other hand, benchmarks consisting of simple indexing operations show a larger slowdown when array bounds checks were turned on. Figure \ref{fig:results_cwchecks} gives the execution times of the \matlab benchmarks for the C backend with and without bounds checks. As we can see, 6 of the 17 benchmarks show a slow down when bounds check are added. The benchmarks include fft, fiff, matmul, bubble, capr and dich.
 
 \begin{figure}[htbp]
 \centering
@@ -101,11 +100,118 @@ When comparing the execution times of the C backend with and without bounds chec
 \caption{Comparison of the execution times of C backends with and without benchmarks. }
 \label{fig:results_cwchecks}
 \end{figure}
+ Table \ref{tab:CwovsCw} gives the slowdown of the generated C code when bounds checks are enabled compared to when bounds checks are disabled. The geometric mean of the slowdown for all benchmarks is 1.65. If only the geometric mean of the affected benchmarks are considered, we get a geometric mean of 3.66. The matmul benchmark shows the highest slowdown with 10.44. The slowdown for the crni benchmark cannot be calculated since a version of the generated code with checks disabled cannot be executed. 
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+Benchmarks                           & Slowdown     \\ \hline
+bbai                                 & 1.210019268  \\ \hline
+bubble                               & 8.613793103  \\ \hline
+capr                                 & 2.62406015   \\ \hline
+clos                                 & 0.8444354184 \\ \hline
+crni                                 & -            \\ \hline
+dich                                 & 1.711805556  \\ \hline
+fft                                  & 1.436065574  \\ \hline
+fiff                                 & 4.15234375   \\ \hline
+lgdr                                 & 1.016372796  \\ \hline
+matmul                               & 10.44827586  \\ \hline
+mbrt                                 & 1.021621622  \\ \hline
+mcpi                                 & 1.003021148  \\ \hline
+nb1d                                 & 1.047817048  \\ \hline
+numprime                             & 1.061643836  \\ \hline
+quadrature                           & 1            \\ \hline
+scra                                 & 1.098253275  \\ \hline
+spqr                                 & 1.037181996  \\ \hline
+Geometric mean                       & 1.657669836  \\ \hline
+Geometric mean (Affected Benchmarks) & 3.661753813  \\ \hline
+\end{tabular}
+\caption{Slowdown of the Generated C Code when Bounds Checks are enable compared to when Bounds Checks are disabled}
+\label{tab:CwovsCw}
+\end{table}
+In order to determine the improvement in performance when bounds check optimisations were enabled, we compared the slowdown of the generated C code with checks enabled  and the slowdown of the generated code with the bounds check optimisation enabled against the generated C code without checks. Table \ref{tab:CwvsCbc} gives the slowdowns for all the benchmarks. The geometric mean of slowdown with the optimisation enabled is 1.01. Thus the version of the generated code with optimisations enabled is as fast as the version without checks. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+Benchmarks                           & C with checks & C with optimisation \\ \hline
+bbai                                 & 1.210019268   & 1.134874759         \\ \hline
+bubble                               & 8.613793103   & 1.006896552         \\ \hline
+capr                                 & 2.62406015    & 0.7218045113        \\ \hline
+clos                                 & 0.8444354184  & 0.9126726239        \\ \hline
+crni                                 & -             & -                   \\ \hline
+dich                                 & 1.711805556   & 1                   \\ \hline
+fft                                  & 1.436065574   & 1.426229508         \\ \hline
+fiff                                 & 4.15234375    & 0.96875             \\ \hline
+lgdr                                 & 1.016372796   & 1.057934509         \\ \hline
+matmul                               & 10.44827586   & 0.9913793103        \\ \hline
+mbrt                                 & 1.021621622   & 1.021621622         \\ \hline
+mcpi                                 & 1.003021148   & 1.001007049         \\ \hline
+nb1d                                 & 1.047817048   & 0.9875259875        \\ \hline
+numprime                             & 1.061643836   & 1.071917808         \\ \hline
+quadrature                           & 1             & 1                   \\ \hline
+scra                                 & 1.098253275   & 0.9825327511        \\ \hline
+spqr                                 & 1.037181996   & 1.084148728         \\ \hline
+Geometric mean                       & 1.657669836   & 1.014442695         \\ \hline
+Geometric mean (Affected Benchmarks) & 3.661753813   & 0.9992501872        \\ \hline
+\end{tabular}
+\caption{Slowdown of generated C code with checks and generated C code with bounds check optimisation. }
+\label{tab:CwvsCbc}
+\end{table}
+
+The performance improvement of the generated code when the memory optimisations were enabled was also gauged. We calculated the speedups of the generated C code with memory optimisations enabled compared to the generated C code without checks for all the benchmarks. Table \ref{tab:cmvscwo} gives the speedups for the benchmarks. The geometric mean of the speedups for all benchmarks is 1.14. Four benchmarks, capr, scra, spqr and nb1d showed speedups of 1.4, 3.24, 2.67 and 1.51 respectively. The geometric mean of the four affected benchmarks is 2.36. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+Benchmarks                           & C with memory optimisation \\ \hline
+bbai                                 & 0.9980769231               \\ \hline
+bubble                               & 1.013986014                \\ \hline
+capr                                 & 1.4                        \\ \hline
+clos                                 & 1.18479307                 \\ \hline
+crni                                 & -                          \\ \hline
+dich                                 & 0.9632107023               \\ \hline
+fft                                  & 0.9945652174               \\ \hline
+fiff                                 & 1.003921569                \\ \hline
+lgdr                                 & 1.065057009                \\ \hline
+matmul                               & 1.01754386                 \\ \hline
+mbrt                                 & 0.9762532982               \\ \hline
+mcpi                                 & 0.993993994                \\ \hline
+nb1d                                 & 1.517350158                \\ \hline
+numprime                             & 0.9449838188               \\ \hline
+quadrature                           & 1                          \\ \hline
+scra                                 & 3.24822695                 \\ \hline
+spqr                                 & 2.67539267                 \\ \hline
+Geometric mean                       & 1.142948856                \\ \hline
+Geometric mean (Affected Benchmarks) & 2.362507726                \\ \hline
+\end{tabular}
+\caption{Speedups of Generated C code with Memory Optimisations}
+\label{tab:cmvscwo}
+\end{table}
+
+Three of the \matlab benchmarks, nb1d, matmul and mbrt can be executed in parallel. We calculated the speedups of the three benchmarks in parallel compared to the C version without checks. Table \ref{tab:cpvscwo} gives the speedups for the three benchmarks. The matmul and mbrt benchmarks show significant speedups. This is because in the case of the the two benchmarks, a very small portion of the code needs to be executed sequentially. Moreover, parallel portion of the code is computationally intensive thus making the thread management time a small portion of the total execution time. On the other hand, the nb1d benchmark shows no speedup. This can be attributed to the fact that the loop being parallelised is nested inside another loop executing sequentially. Moreover, the loop being executed in parallel in not computationally intensive and hence the benchmark does not benefit from parallel execution. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+Benchmark & Speedup \\ \hline
+matmul    & 4.75    \\ \hline
+mbrt      & 3.19    \\ \hline
+nb1d      & 0.96    \\ \hline
+\end{tabular}
+\caption{Speedup of Generated Code with Parallel constructs}
+\label{tab:cpvscwo}
+\end{table}
+
+
 \subsection{Python Results}
-We ran experiments on 9 Python benchmarks. We compared the generated C code without bounds checks to Cython and the CPython interpreter. Figure \ref{fig:results_cwochecks_py} is a bar graph showing the speedup of the generated C code and the Cython code compared to the CPython interpreter. The blue bars indicate the speedup of the generated C code and the red bars indicate the speedup of the Cython code. The geometric mean of the benchmarks was 208. was observed for the srad benchmark 
+We ran experiments on 9 Python benchmarks. We compared the generated C code without bounds checks to Cython and the CPython interpreter. Figure \ref{fig:results_cwochecks_py} is a bar graph showing the speedup of the generated C code and the Cython code compared to the CPython interpreter. The blue bars indicate the speedup of the generated C code and the red bars indicate the speedup of the Cython code. The geometric mean of the benchmarks was 208.69. The largest speedup of 557.82  was shown by the lud benchmark. The smallest speedup of 47.11 was shown by the fft benchmark. 
+
+The generated C code is faster than the cython code for all the benchmarks. Comparing the speedup of our generated C code to the Cython code, a mean speedup of 2.21 was found. The largest speedup of 14.93 was shown by the fft benchmark. The benchmarks arc\_distance, lud and pagerank take the same time to execute as our generated C code. The arc\_distance benchmark consists primarily builtin function calls on scalar values and hence does not show a difference for both Cython and the generated C code. 
 \begin{figure}[htbp]
 \centering
 \includegraphics[scale=0.5]{Figures/results_cwochecks_py.png}
-\caption{Comparison of the execution times of C backends with and without benchmarks. }
+\caption{Comparison of generated C code with Cython and C-Python interpreter.}
 \label{fig:results_cwochecks_py}
 \end{figure}

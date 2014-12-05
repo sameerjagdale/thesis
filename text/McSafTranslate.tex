@@ -1,11 +1,17 @@
+As mentioned in the earlier chapters, \velocty supports two languages, \matlab and Python. The \velocty backend takes VRIR as input and generates C++ code. We use PyVrir that is part of the Velociraptor toolkit generate VRIR from Python. However, no such tool exists to generate VRIR from \matlab to VRIR. The McLab toolkit is a framework to aid static compilation of \matlab to different langauges. In order, to support the compilation of \matlab programs to C++ through \velocty, we implemented a VRIR generator using the McLab toolkit. Section \ref{sec:comppipe} provided an overview of the compilation pipeline from \matlab to VRIR and then to C++. As mentioned in the section, the VRIR generator takes an input McSAF IR and generates the s-expression version of VRIR.
+
+VRIR generation had challenges. The McSAF IR is a \matlab specific IR whereas VRIR is designed to handle semantics of different langauges and thus contains flags to specify semantic information such as array layout, indexing scheme etc. We had to ensure the appropriate flags were set to correctly represent semantics of \matlab. Moreover, VRIR is a strongly typed AST representation. Every expression node in VRIR has a type  and shape information associated with it. McSAF does not explicitly hold this information and hence had to be determined during the compilation process. Additionally, \matlab functions do not need an explicit return statement for the output. When a return statement is explictly provided, the parameters that need to be returned are not specified. This is because the output parameters are specified in the function signature. On the other hand, VRIR does not support output parameters and only supports output types. This difference in IR structure also had to be handled.
+
+This chapter discusses the compilation of various nodes of the McSAF IR to VRIR, generation of the symbol table and how the types and shapes of expressions are determined.
 \section{Mapping types}
-\section{Mapping operators}
-\section{Colon Expression transformation}
-\section{Determining types of expressions}
-\subsection{Determining type of name expression}
-\subsection{Determining type of Parameterized expressions}
-\section{Handling Shortcircuit operators}
 \section{Handling functions}
 \section{Mapping statements}
 \subsection{Mapping return statements}
+\section{Mapping Expressions}
+\subsection{Mapping operators}
+\subsection{Colon Expression transformation}
+\subsection{Handling Shortcircuit operators}
+\section{Determining types of expressions}
+\subsection{Determining type of name expression}
+\subsection{Determining type of Parameterized expressions}
 

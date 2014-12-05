@@ -2,7 +2,8 @@ With the advent of multicore processors, there has been a renewed interest in th
 Array-based languages offer features like, a interpreter style read-eval-print-eval, functions such as eval and feval for dynamic code evaluation, no types etc. which enable rapid prototyping. However due to the very same features, these languages show poorer performance when compared to statically compiled languages. A common approach for improving the performance is compile whole programs to languages such as {\sc FORTRAN} and C. However, in most cases, the most computationally intensive portion of the program is small, often localised inside a loop body. Hence compiling the entire program is not necessary. In most cases speed up observed through partial compilation of hot code sections is commensurate with that observed by compiling the whole program. This allows the user to continue programming in the language he/she is more comfortable in.\\
 This thesis addresses the problem of improving the performance of programs written in array-based languages by compiling the hot sections to parallel C++. We support both \matlab and Numpy. There are two main challenges. First one is supporting the different and often complementary semantics of both languages. The other is supporting the large number of builtins methods that are supported by both languages.
 Our solution implement a static C++ backend for Velociraptor\cite{velociraptor} toolkit and use tools to compile matlab and Python programs to the Velociraptor intermediate representation, VRIR. The McLab static pipeline is used for \matlab and PyVrir, a Python frontend for Velociraptor is used for Python. 
-\section{\velocty compilation pipeline}
+\section{\velocty Compilation Pipeline}
+\label{sec:comppipe}
 \begin{figure}[htbp]
 \begin{center}
 \includegraphics[scale=0.5]{Figures/Overview_thesis.png}

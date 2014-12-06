@@ -1,35 +1,4 @@
 An important contribution of the thesis is the static generation of C++ code from VRIR. Due to differences in the semantics of VRIR and C++, we faced various challenges during code generation. As described in \chapref{chap:Background}, VRIR is a high level strongly typed AST designed to support easy compilation of a wide range of array-based languages. Hence, it supports different indexing schemes such as 0-indexing, 1-indexing and negative indexing as well as different array layout schemes such as row-major and column-major. C++ on the other hand does not have an built in support for arrays, and only supports 0-indexing and a row major layout. Moreover, VRIR also supports multiple returns. On the other hand, we can only return a single value, which can be a scalar, class, struct or a pointer, in C++. This chapter describes how the symbol table is used for code generation, the runtime library and finally how different nodes of VRIR such as statements, types and expressions are compiled to C++ constructs. 
-\section{Symbol Table}
-\begin{lstlisting}[float,language=lisp, label={lst:symtab}, caption={Symbol table in VRIR}]
-(symtable
-	(sym :id 5 :name par 
-		(float64 :ctype 0)) 
-	(sym :id 0 :name R 
-		( arraytype :layout colmajor :ndims 2
-			(float64 :ctype 0)
-		)
-	) 
-	(sym :id 2 :name z_hat 
-		( arraytype :layout colmajor :ndims 2
-			(float64 :ctype 0)
-		)
-	) 
-	(sym :id 6 :name ck 
-		(float64 :ctype 0)) 
-	(sym :id 1 :name y 
-		(arraytype :layout colmajor :ndims 2
-			(float64 :ctype 0)
-		)
-	) 
-	(sym :id 4 :name k 
-		(float64 :ctype 0)
-	) 
-	(sym :id 3 :name n 
-		(float64 :ctype 0)
-	) 
-)
-\end{lstlisting}
-The symbol table contains a list of symbols that are defined inside a function in VRIR. The table contains the name and the type of each symbol. Moreover, there is a unique id associated with every symbol using which it is referenced in the function. Listing \ref{lst:symtab} gives an example of a symbol table in VRIR. The symbol table contains a set of sym nodes each having a unique id. For example, the sym node with id 5 on line 2 is the symbol par which is of type float64.
 \section{Run time library}
 Languages like \matlab and Python's NumPy library provide a number of high-level numerical and scientific functions. These functions include trigonometric functions such as sin, cos etc., memory allocation functions such as zeros, ones among others. Moreover, \matlab and NumPy also provide simple arithemetic operations on arrays such as multiplication, addition, transpose etc. Additionally, these languages also implicitly provide boundschecks for indexing operations. C++ on the other hand, does not provide many of the functions mentioned above. Hence we provide a language specific runtime library to implement these functions. We currently provide libraries for \matlab and Python. Simple arithmetic operations on arrays are provided using BLAS libraries. We use the Intel MKL library for \matlab and the OpenBLAS library for Python. The libraries also contain implementations for VrArray which are a VeloCty specific array representation. 
 \subsection{VrArrays}
@@ -229,17 +198,17 @@ The void type is used in most cases inside a Func Type to convey the absence of 
 \subsection{Tuple Type}
 Tuple types are used to define data structures which can have data of different types. While generating C++ code, the tuple types are used to generate structs that are in turn used to support data structures containing heterogenous data.
 \subsection{Func Type}
-Func types are associated with function definitions and function handles. They contain information about the types of the input and out parameters of the function. The function types are used for generating function definition. More information about how function definitions are generated in given in section \ref{sec:functions}.
+As mentioned in Subsection \ref{subsec:functypeMat} func types are associated with function definitions and function handles. They contain information about the types of the input and out parameters of the function. The function types are used for generating function definition. More information about how function definitions are generated in given in section \ref{sec:functions}.
 \section{Modules}
 Modules are top-level constructs in VRIR. They contain one or more functions which have to be compiled to C++. A module also has an attribute called indexing which defines the indexing scheme. The indexing scheme can either be 0 or 1 indexing. More details about how the indexing attribute is used can be found in section \ref{subsec:basicindexing}.
 \section{Functions} 
 \label{sec:functions}
-Functions in VRIR are compiled to separate functions in C++. The function node in VRIR has multiple children all of which are required to generate the C++ code for the function. The list of children node of the function node and their role in the code generation process is as follows :
+Functions in VRIR are compiled to separate functions in C++. As mentioned in \ref{sec:funcGen}, the function node in VRIR has multiple children all of which are required to generate the C++ code for the function. The list of children node of the function node and their role in the code generation process is as follows :
 \begin{itemize}
-\item Name : The function name represents the name of the function. A C++ function of the same name is generated.   
-\item Arglist : The arglist is a list of integers which are the Ids of the input arguments in the symbol table.
+\item Name : A C++ function of the same name is generated.   
+\item Arglist : Contains a list of the ids of the input arguments refererring to their Symbol table entries. They are used to fetch the name of the Symbol table. 
 \item Func type : The Func type is used for generating the input argument types and the return type.
-\item Body : The body represents the body of the function. It consists of a list of statements. 
+\item Body : It refers to the function body and is converted to C++ sstments. 
 \end{itemize}
 The table \ref{tab:funcTypeMap} depicts how a function node in VRIR is converted to a C++ function. The function babai returns an array of type VrArrayF64 and takes as input two arrays of type VrArrayF64.
 The return type of the function is determined using the outtype node inside the funcType node. The names and types of the input parameters are determined using the arglist. The ids in the arglist are used to look up the names and types of the input arguments. 

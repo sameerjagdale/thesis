@@ -422,17 +422,536 @@ end
 
 In \matlab, a function need not have an explicit return statement. All the output parameters are returned to the caller once the end of the function is reached. However, for reasons mentioned above, we need a return statement in VRIR. Hence a return statement is explictly added along with the output parameters. 
 \subsection{If Statement}
+The if statement in \matlab is compiled to the if statement node in VRIR. The if statement in VRIR has three child nodes. The test expression contains the if condition, the if child contains the list of statements inside the if block and the else child contains the list of statement inside the else block. Table \ref{tab:ifGen} gives an example of the if statement. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+\matlab &  Generated VRIR \\
+\hline
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+	if <test condition>
+		<If Block>
+	else 
+		<Else Block>
+	end;
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[frame=none, numbers=none]
+(ifstmt
+	(test
+		<test condition>
+	)
+	(if 
+		<If block>
+	)
+	( else 
+		<Else block>
+	)
+)
+
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[If Statement example in \matlab and VRIR]{The table shows an example of the generated If statement VRIR node a statement in \matlab.}
+\label{tab:ifGen}
+\end{table}
 \subsection{While Statement}
+Similar to the if statement, the while statement in \matlab is mapped to the while statement node in VRIR. The while statement node in VRIR contains two child nodes. A test node while holds the while condition and the body node which holds the statements of the loop body. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+\matlab &  Generated VRIR \\
+\hline
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+	while <test condition>
+		<While Body>
+	end;
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[frame=none, numbers=none]
+(whilestmt
+	(test
+		<test condition>
+	)
+	(body 
+		<While Body>
+	)
+)
+
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[While Statement example in \matlab and VRIR]{The table shows an example of the generated While statement VRIR node a statement in \matlab.}
+\label{tab:whileGen}
+\end{table}
 \subsection{Break and Continue statements}
-\subsection{Statement List}
+The break and continue statements in \matlab are compiled to the break continue statement nodes in VRIR respectively. 
+\section{Ranges} 
+\label{sec:range}
+Ranges are used to define a range of values. In VRIR, a range node has three expressions, start, stop and step. The range node represents a range from the start expressions value to the stop expression value with intervals of the step expression value.Whether the stop expression value is included in the range is determined using the exclude attribute. If the exclude attribute is set to \textsf{\%1} the stop expression value is excluded and the stop expression value is included when the exclude attribute is set to \textsf{\%0}. In case of \matlab, since the stop expression value  is always included, the exclude attribute is always set to \textsf{\%0}. The step expression value is optional and defaults to 1 if not specified. Ranges are used for two reasons, one to represent loop bounds and other to represent an array slice in an index operation. Listing \ref{lst:rangeGen} gives an example of a range node in VRIR. The exclude flag is set to \textsf{\%0} and hence the stop expression value will be included. 
+\begin{lstlisting}[float,language=matlab, label={lst:rangeGen}, caption={Example of a Range in VRIR}]
+(range :exclude %0
+	(start
+		<Start Expression>
+	)
+	(step
+		<Step Expression>		
+    )
+	(stop
+		<Stop Expression>
+	)
+)
+\end{lstlisting}
 \section{Mapping Expressions}
-\subsection{Determining types of expressions}
-\label{subsec:typedeter}
-\subsubsection{Determining type of name expression}
-\subsubsection{Determining type of Parameterized expressions}
-\subsection{Mapping operators}
-\subsection{Colon Expression transformation}
-\subsection{Library Call expressions}
-\label{subsec:libcall}
+Similar to statements, many expressions in \matlab have equivalent expression nodes in VRIR. However, every expression node has a type associated with it. This is not the case with the McSAF IR. Hence the type of each expression is required to be calculated during code generation. 
+\subsection{Name Expressions}
+Name expressions in \matlab can either mean a variable or a call to a function with arguments. In case of variables, a name expression is generated in VRIR. A function call expression is generated if the expression represents a call to a function. If expression is the first occurrence of the variable, an entry in symbol table is also made. The name expression contains an id attribute. The id attribute value represents the id of the variable in the symbol table. Table \ref{tab:nameGen} gives an example of a variable in \matlab and its equivalent name expression node in VRIR. The example shows the generated name expression for variable A. The id of the variable in the symbol table is 10. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+\matlab &  Generated VRIR \\
+\hline
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+A
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+(name :id 10)
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[Name Expression example for \matlab]{The table shows an example of the generated name expression node for a variable A in \matlab. }
+\label{tab:nameGen}
+\end{table}
+\subsection{Paramaterized Expressions}
+\label{subsec:paramGen}
+Parameterized experssions can be mapped to many different nodes in VRIR depending on their semantics. In \matlab, a parameterized expression can be an array index operation or a function call. The kind analysis\cite{Doherty:2011:KAM:2076021.2048077} is  used to differentiate between function calls and array index operations. 
+\subsubsection{Index Expressions}
+If the parameterized expression in McSAF represents an index operation, the VRIR generator compiles the expression to an index expression. Table \ref{tab:indexGen} gives an example of an array index operation in \matlab and the equivalent VRIR code that was generated. The index operation has two indices. The first one is a simple numeric index \textsf{k},  whereas the second one is a slice index and hence specifies a range of index values starting from \textsf{k+1} to \textsf{n}. The VRIR index expression node  has an \textsf{arrayid} attribute which holds the id of the array inside the symbol table. In the example, the array id 0 refers to the array R. The copyslice flag whether the values of set of indices reprented by the indices have to be copied to a new array. The \textsf{indices} child node of array holds the set of indices of the index operation. Each child node is of type index. Note that this node is different from the index expression node. The index node has two attributes. The \textsf{boundschecks} attribute indicates whether array bounds checks need to be added for the index. The \textsf{negative} attribute indicates whether the index value can be negative. In case of \matlab, the \textsf{boundscheck} attribute  is set to \textsf{\%1} to include bounds checks and the \textsf{negative} attribute is set to \textsf{\%0} to indicate that the index value will not be negative. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+\matlab &  Generated VRIR \\
+\hline
+{
+\begin{lstlisting}[language=c,frame=none, numbers=none]
+R(k,(k+1):n)
+\end{lstlisting}
+} 
+&
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+(index :arrayid 0 :copyslice %1
+	( arraytype :layout colmajor :ndims 2
+		(float64 :ctype 0))
+	(indices
+		(index :boundscheck %1 :negative %0
+			(name :id 4
+				(float64 :ctype 0)
+			)
+		)
+		(index :boundscheck %1 :negative %0
+			(range :exclude %0
+				(start
+					(plus
+						(float64 :ctype 0)
+						(lhs
+							(name :id 4
+								(float64 :ctype 0)
+							)
+						)
+						(rhs
+							(realconst :dval 1
+								(float64 :ctype 0)
+							)
+						)
+					)
+				)
+				(stop
+					(name :id 3
+						(float64 :ctype 0)
+					)
+				)
+			)
+		)
+	)
+)
+\end{lstlisting}
+}
+\\
+\hline
+\end{tabular}
+\caption[Index Expression Generation Example]{The table shows a \matlab index operation with a slice operation that is compiled VRIR}
+\label{tab:indexGen}
+\end{table}
+\subsubsection{Function Call Expressions}
+Parameterized expressions that are calls to functions in \matlab can be divided into four broad categories: operators, library calls, allocation function calls and miscellaneous function calls. 
+
+Operators include binary and unary operators such as plus, minus, unary minus etc. Although the McSAF IR does have nodes for all the operators, Tamer converts the operators to function calls when generating TameIRand Tamer+ keeps them as function calls. In case of operations on scalars, we convert the parameterized expressions representing operators to equivalent operators in VRIR. For some of these operators, if atleast one of the operands are arrays, a libcall expression is generated. Table \ref{tab:opGen} gives a list of \matlab operators  and the VRIR nodes that are generated. If the last column, array operands, has a yes, the VRIR node is also generated for the array operands. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+Matlab function & VRIR Node & Array Operands \\ \hhline{|=|=|=|}
+plus            & plus   & No   \\ \hline
+minus           & minus  & No   \\ \hline
+rdivide         & div    & No   \\ \hline
+mtimes          & mmult  & No   \\ \hline
+times           & mult   & No   \\ \hline
+or              & or     & Yes   \\ \hline
+eq              & eq     & Yes   \\ \hline
+le              & leq    & Yes   \\ \hline
+ge              & geq    & Yes   \\ \hline
+lt              & lt     & Yes   \\ \hline
+gt              & gt     & Yes   \\ \hline
+uminus          & negate & Yes   \\ \hline
+not             & negate & Yes   \\ \hline
+\end{tabular}
+\caption[List of operators in \matlab and their equivalent VRIR nodes]{ The table list the operators in \matlab and the equivalent VRIR nodes that are generated. }
+\label{tab:opGen}
+\end{table}
+
+Table \ref{tab:opEx} gives an example of a plus operator in \matlab which has two operand expressions that are converted to the plus expression in VRIR. All other operators have a similar structure in VRIR. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\matlab &  Generated VRIR\\
+\hline
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+<op1> + <op2>;
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+(plus
+	(float64 :ctype 0)
+	(lhs
+		<op2>
+	)
+	(rhs
+		<op2>
+	)
+)
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[Example of operators in \matlab and VRIR]{The table shows an example of a plus operator in \matlab that is converted to a plus expression node in VRIR}
+\label{tab:opEx}
+\end{table}
+
+As mentioned, operations on arrays are compiled to library call operations in VRIR. Additionally, operators that can only take array operands such as matrix multiplication, transpose, matrix division among others, are also supported through library call expressions. Library call expressions also support some other functions that are commonly used in numerical and scientific computing and hence many of those functions are also compiled to library call expressions. Table \ref{tab:libCallGen} lists the scientific functions that are supported by the lib call expression. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+Library Functions & Description           \\ \hline
+Sqrt              & Square root           \\ \hline
+Log2              & Log with base 2       \\ \hline
+Log10             & Log with base 10      \\ \hline
+Expe              & exponent of e         \\ \hline
+Exp10             & exponent of 10        \\ \hline
+Sin               & Trigonometric Sin     \\ \hline
+Cos               & Trigonometric Cosine  \\ \hline
+Tan               & Trigonometric tangent \\ \hline
+Asin              & Inverse sin           \\ \hline
+Acos              & Inverse cosine        \\ \hline
+Atan              & Inverse tangent       \\ \hline
+Pow               & power function        \\ \hline
+Sum               & Sum function          \\ \hline
+Prod              & Product function      \\ \hline
+Atan2             & Arc Tangent           \\ \hline
+Abs               & Absolute value        \\ \hline
+Min               & Min function          \\ \hline
+Max               & Max Function          \\ \hline
+Mean              & Mean function         \\ \hline
+Copy              & Copy function         \\ \hline
+Mmult              & Matrix Multiplication         \\ \hline
+Mrdiv              & Matrix right division         \\ \hline
+Mldiv              & Matrix left division         \\ \hline
+Div              & Element wise array division         \\ \hline
+Mult              & Element wise array multiplication         \\ \hline
+Plus              & Element wise array addition         \\ \hline
+Minus              & Element wise array subtraction         \\ \hline
+\end{tabular}
+\caption[List of functions supported by library call expressions]{The table lists the functions supported by the library call expression in VRIR.}
+\label{tab:libCallGen}
+\end{table}
+
+Calls to functions like \textsf{zeros} and \textsf{ones} which are used to create arrays in \matlab are compiled to the alloc expressions in VRIR. Table \ref{tab:allocGen} gives an example of a \matlab function zeros and the VRIR alloc expression that was generated. The alloc expression contains a \textsf{func} attribute which defines the name of the function. It takes three values, \textsf{zeros}, \textsf{ones} and \textsf{empty}. The \textsf{zeros} function creates an array and initialises all elements to zero, ones creates an array and initialises all elements to one and \textsf{empty} creates an uninitialised array. \matlab does not support the \textsf{empty} function and hence the VRIR generator only generates the \textsf{ones} and the \textsf{zeros} function. The alloc expression also has a child node \textsf{args} which holds the input arguments of the function. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\matlab &  Generated VRIR\\
+\hline
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+zeros(m,n);
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+(alloc :func zeros
+	( arraytype :layout colmajor :ndims 2
+		(float64 :ctype 0)
+	)
+	(args
+		(name :id 2
+   			(float64 :ctype 0)
+		)
+		(name :id 4
+   			(float64 :ctype 0)
+		)
+	)
+)
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[Example of a zeros function call in \matlab and equivalent VRIR code]{The table gives an example of the zeros function call in \matlab and the equivalent alloc expression that is generated in VRIR.}
+\label{tab:allocGen}
+\end{table}
+
+Function calls which do not qualify as library call expressions or alloc expressions are compiled to the function call expression node in VRIR. These include calls to user-defined functions as well as builtin functions that are not supported by alloc or library call expressions. In \matlab arguments to functions are passed by value. On the other hand, in VRIR, arguments are passed by reference. Hence in order to generate code that matches \matlab semantics, we add calls to the library call function \textsf{copy} for calls to the user-defined functions. Builtin implementations ensure that a input arguments are copied if they have to be written to and hence no function calls to \textsf{copy} are generated. Table \ref{tab:funcGen} gives an example of a user-defined function gauss that is compiled to a function call expression in VRIR. The name of the function is defined by the attribute \textsf{fnname}. The args child node contains the input arguments to the function. The arguments are copied by adding a call to the library call function \textsf{copy}.
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\matlab &  Generated VRIR\\
+\hline
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+gauss(n,m)
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+(fncall :fnname gauss
+	(float64 :ctype 0)
+	(args
+		(libcall :libfunc copy 
+			(float64 :ctype 0) 
+			(args 
+				(name :id 4
+   					(float64 :ctype 0)
+				)
+			)
+		)
+		( libcall :libfunc copy 
+			(float64 :ctype 0) 
+			(args 
+				(name :id 11
+   					(float64 :ctype 0)
+				)
+			)
+		)
+	)
+)
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[Example of a function call in \matlab compiled to a function call expression]{The table gives an example of a user-defined function call in \matlab and the equivalent function call expression that is generated in VRIR.}
+\label{tab:funcGen}
+\end{table}
+\subsection{Matrix Expressions}
+Matrix expressions in \matlab are used to represent multiple expressions and are often are found on the left hand side of an assignment statement where the right hand side is a call to a function with multiple output parameters. Matrix expressions are compiled to tuple expressions in VRIR. Table \ref{tab:matrixGen} gives an example of a matrix expression and the equivalent tuple expression. A tuple type is generated for a tuple expression which holds the types for each of the expressions inside the tuple expression. The tuple expression also holds a \textsf{elem} child node which holds the expressions of the matrix expression. In this case, the matrix expression contains two name expressions. Note the generated VRIR code only depicts the left hand side of the assignment statement.
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\matlab &  generated VRIR\\
+\hline
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+[nc, r]  = spqr(a,tol,maxrc)
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+(tuple
+	(tupletype
+		(float64 :ctype 0)
+		(arraytype :layout colmajor :ndims 2
+			(float64 :ctype 0)
+		)
+	)
+	(elems
+		(name :id 3
+			(float64 :ctype 0)
+		)
+		(name :id 8
+   			( arraytype :layout colmajor :ndims 2
+				(float64 :ctype 0)
+			)
+		)
+	)
+)
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[example of a matrix expression in \matlab with the equivalent VRIR code]{the table gives an example of a matrix expression in \matlab and the equivalent VRIR tuple expression that is generated.}
+\label{tab:matrixGen}
+\end{table}
+\subsection{Literal Expressions}
+Literal expressions are expressions in \matlab holding constant value. There are three types of literal expression in \matlab: Fp literal expressions which represent the floating point constants, int literal expressions which represent integer constants and string literal expressions which represent strings. Since VRIR does not support strings, the VRIR generator does not support the string literal expression. Both the Fp literal expression and the Int literal expressions are compiled to the constant expression in VRIR.
+
+ Table \ref{tab:constGen} gives an example of the constant expression in VRIR that is generated from a constant value in \matlab. The constant expression in VRIR has a \textsf{dval} attribue which specifies a floating point constant value. Whether the value is 64 bit or 32 bit can be determined by checking the type of the expression. In case of Int literal expressions, the \textsf{ival} attribute is used. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\matlab &  generated VRIR\\
+\hline
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+ oldcap = 0;
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+(realconst :dval 0
+	(float64 :ctype 0)
+)
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[Example of a Fp literal in \matlab with the equivalent VRIR code]{the table gives an example of a Fp literal expression in \matlab and the equivalent VRIR constant expression that is generated.}
+\label{tab:constGen}
+\end{table}
+
 \subsection{Domain Expressions}
 \label{subsec:domainExpr}
+Domain expressions are used in \textsf{for} statements to specify the loop bounds. Domain expressions can support multiple loop bounds, one for each iteration variable. However \matlab only allows a single iteration variable for a loop and hence only one set of loop bounds exist inside a domain expression for \matlab. The VType of the domain expression is the domain type which holds the VTypes of all the iteration variables of the loop. The loop bounds are represented by ranges described in Section \ref{sec:range}. 
+
+Table \ref{tab:domainGen} gives an example of the domain expression that is generated as part of the for statement in VRIR. The Domain expression has a domain type and a single range for the iteration variable. The range starts from 1 and stops at \textsf{na}. Since the exclude attribute is not set, the stop value is included in the range.
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\matlab &  Generated VRIR\\
+\hline
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+ for ii = 1:na
+	<Loop Body>
+ end;
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+(domain
+	( domaintype :ndims 1 
+		(float64 :ctype 0)
+	)
+	(range :exclude %0
+		(start
+			(realconst :dval 1
+				(float64 :ctype 0)
+			)
+		)
+		(stop
+			(name :id 0
+				(float64 :ctype 0)
+			)
+		)
+	)
+)
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[Example of a domain expression node in VRIR]{the table gives an example of a for statement in \matlab and the domain expression that is generated as a part of the for statement in VRIR.}
+\label{tab:domainGen}
+\end{table}
+\section{Determining VTypes of expressions}
+\label{subsec:typedeter}
+The Tamer framework provides analyses such as the value analysis, shape analysis and the isComplex analysis. For every name expression in a function, these analyses determine the variable's type, shape and whether it is real or complex. This information is required in order to generate the VType of an expression. We also need to use the map between expressions in McSAF and their equivalent temporaries in TameIR that is provided by Tamer+ to determine VTypes of expressions other than the name expression.
+\subsection{Determining type of name expressions}
+Name expressions store the name of the variable as a string. The variable name can be used to access the information required for generating VTypes stored in the value, shape and isComplex analyses. Thus in case of name expressions, the VType can be determined directly using the analyses. 
+\subsection{Determining VTypes of Other Expressions}
+An expression in McSAF IR, generated by Tamer+ can be of classified into two broad categories. One which was part of a statement in three address code in the original \matlab function and one which was part of statement that was broken down into multiple three  address code statements by Tamer. In the first case, we Tamer+ does not aggregate multiple statements whereas it a does aggregate multiple statements in the second case.  
+
+In the first case, if the expression is on the LHS of the statement, the expression will be a name expression and hence its VType can be determined using the method for name expressions mentioned above. If the expression on the RHS, we calculate the VType of the LHS expression which will also be the VType of the RHS expression. 
+
+In the second case, if the expression is on the LHS, the expression is either a matrix expression or a parameterized expression. In such cases the RHSexpression has a temporary variable that is associated it. The VType for the temporary variable can be generated which will be the VType for the LHS expression. If the expression is on the RHS, the expression itself will have a temporary variable associated with it. 
+\section{Colon Expression transformation}
+\label{sec:colonExpr}
+The colon expression in \matlab is used in index operations when all the elements of one or more dimensions have to be specified. Listing \ref{lst:colonExprEx} gives an example of an index operation with a colon expression. Second index of the index operation on array A, is a colon expression. The colon expression selects all the column of the array A. For every column index, the element in row 1 is selected. Thus, the index operation will fetch that all values from all the column that are in the first row. Note that we are assuming that the A is a matrix. If the number of dimensions are greater than 2 ( greater than the number of indices), the stop value for the colon expression is the product of all the dimension sizes starting from the second dimension. We call this as array dimension flattening. 
+In this case, if there are 3 dimensions in total, the stop value of the colon expression will be the product of the sizes of the second and the third dimensions. 
+
+There is no equivalent statement in VRIR. In order to generate a range, we need the start and stop values. The start value will always be one. In order to fetch the stop value, we implemented a tranformation which inserts the code to calculate the stop value of the colon expression.This tranformation takes into account that an dimensions will have to be flattened if the the colon expression appears as the last index of of the array index operation. 
+
+We insert a statement before the index operation which stores the size of the dimensions for which the colon expression appears. If the colon expression appears as the last index of the array index operation, we also insert a for loop which takes a product of all the dimension sizes starting from the index position where the colon expression appears to the last dimension of the array. The colon expression is then replaced by range expression with the start value as 1 and the stop value as the calculated size. The range expression can then be compiled to the range described in Section \ref{sec:range}. Table \ref{tab:colonExpr} gives an example of how the McSAF IR is transformed. The first column shows the pretty printed McSAF code before the transformation and the second column shows the pretty printed McSAF after the transformation. The code contains three array index operations, each of which have a colon expression. Since for all three index operations the colon expression appears as the last index, a for loop is also inserted which flattens the array dimensions should the number of dimensions be greater than the number of indices. Moreover, the colon expression is replaced by the range expression with the start value as one and the stop value the one which was calculated.
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+McSAF (Before transformation) & McSAF (After transformation)\\
+\hline
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+dr(:) = (R(jj,: ) - R(ii, :));
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+dim_temp4 = 1;
+for dim_temp5 = (1 : ndims(dr));
+	dim_temp4 = (dim_temp4 * 
+				size(dr, dim_temp5));
+end;
+dim_temp6 = 1;
+for dim_temp7 = (2 : ndims(R));
+	dim_temp6 = (dim_temp6 * 
+				size(R, dim_temp7));
+end;
+dim_temp8 = 1;
+for dim_temp9 = (2 : ndims(R));
+	dim_temp8 = (dim_temp8 * 
+				size(R, dim_temp9));
+end;
+dr((1 : dim_temp4)) = (R(jj, (1 : dim_temp6)) - 
+					   R(ii, (1 : dim_temp8)));
+\end{lstlisting}
+
+}
+ \\
+\hline
+\end{tabular}
+\caption[Example of the colon to range expression transformation]{The table gives an example of the transformation from the colon expression to a range expression. }
+\label{tab:colonExpr}
+\end{table}

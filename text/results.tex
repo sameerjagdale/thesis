@@ -145,60 +145,58 @@ Geometric mean (Affected Benchmarks) & 3.66\\ \hline
 \end{table}
 \subsection{Impact of Bounds Check Optimisations on Performance}
 The previous experiment showed us that bounds checks have a significant impact on performance. This was the reason we implemented an optmisation to elminate the bounds checks where possible. In order to determine the improvement in performance when bounds check optimisations were enabled, we compared the slowdown of the generated VeloCty code with checks enabled  and the slowdown of the generated code with the bounds check optimisation enabled against the generated VeloCty code without checks. Table \ref{tab:CwvsCbc} gives the slowdowns for all the benchmarks. The geometric mean of slowdown with the optimisation enabled is 1.01. The \textsf{fft} benchmark does not show an improvement in performance. This is because the benchmark contains a loop whose direction can not be determined and hence the bounds checks of the loop can not be moved outside the loop body. Thus the version of the generated code with optimisations enabled is as fast as the version without checks. 
-\begin{table}[htbp]
+\begin{table}[h]
 \centering
-\begin{tabular}{|c|c|c|}
+\begin{tabular}{|c|c|}
 \hline
-Benchmarks                           & VeloCty with checks & VeloCty with optimisation \\ \hhline{|=|=|=|}
-bbai                                 & 1.21   & 1.13         \\ \hline
-bubble                               & 8.61   & 1.01         \\ \hline
-capr                                 & 2.62    & 0.72        \\ \hline
-clos                                 & 0.84  & 0.91        \\ \hline
-crni                                 & -             & -                   \\ \hline
-dich                                 & 1.71   & 1                   \\ \hline
-fft                                  & 1.44   & 1.43         \\ \hline
-fiff                                 & 4.15    & 0.97             \\ \hline
-lgdr                                 & 1.02   & 1.06         \\ \hline
-matmul                               & 10.45   & 0.99        \\ \hline
-mbrt                                 & 1.02   & 1.02         \\ \hline
-mcpi                                 & 1.00   & 1.00         \\ \hline
-nb1d                                 & 1.05   & 0.99        \\ \hline
-numprime                             & 1.06   & 1.07         \\ \hline
-quadrature                           & 1             & 1                   \\ \hline
-scra                                 & 1.10   & 0.98        \\ \hline
-spqr                                 & 1.04   & 1.08         \\ \hline
-Geometric mean                       & 1.66   & 1.01         \\ \hline
-Geometric mean (Affected Benchmarks) & 3.66   & 0.99      \\ \hline
+Benchmarks     & Speedups \\ \hhline{|=|=|}
+bbai           & 1.07     \\ \hline
+bubble         & 7.84     \\ \hline
+capr           & 2.49     \\ \hline
+clos           & 1.00     \\ \hline
+crni           & 2.23     \\ \hline
+dich           & 1.71     \\ \hline
+fft            & 1.01     \\ \hline
+fiff           & 4.12     \\ \hline
+lgdr           & 1.02     \\ \hline
+matmul         & 10.54    \\ \hline
+mbrt           & 1.00     \\ \hline
+mcpi           & 1.00     \\ \hline
+nb1d           & 1.06     \\ \hline
+numprime       & 0.99     \\ \hline
+quadrature     & 1.00     \\ \hline
+scra           & 1.04     \\ \hline
+spqr           & 1.01     \\ \hline
+Geometric mean & 1.62     \\ \hline
 \end{tabular}
-\caption{Slowdown of generated VeloCty code with checks and generated VeloCty code with bounds check optimisation. }
+\caption[Speedup of \velocty with bounds check optimisation turned on]{The table lists the speedups obtained when the array bounds check optimisations are turned on against the baseline \velocty code}
 \label{tab:CwvsCbc}
 \end{table}
 \subsection{Impact of Memory Optimisations on Performance}
 As we had already identified that many of the benchmarks contain array operations inside a loop where memory is allocated continuously. As dynamic memory allocations are expensive, we implemented an optmisation to eliminate unecessary memory allocations and instead reuse previously allocated memory where possible. The performance improvement of the generated code when the memory optimisations were enabled was also gauged. We calculated the speedups of the generated VeloCty code with memory optimisations enabled compared to the baseline VeloCty code for all the benchmarks. Table \ref{tab:cmvscwo} gives the speedups for the benchmarks. The geometric mean of the speedups for all benchmarks is 1.14. Four benchmarks, \textsf{capr}, \textsf{nb1d}, \textsf{scra}, \textsf{spqr} showed speedups of 1.54, 1.59,  3.57 and 2.77 respectively. All of these benchmarks consisted of loops inside which array operations were performed. Since, because of the optimisation, previously allocated memory was reused, we observed a noticeable speedup. The geometric mean of the four affected benchmarks is 2.36. 
-\begin{table}[htbp]
+\begin{table}[h]
 \centering
 \begin{tabular}{|c|c|}
 \hline
-Benchmarks                           & Speedups \\ \hline
-bbai                                 & 1.18     \\ \hline
-bubble                               & 1.08     \\ \hline
-capr                                 & 1.54     \\ \hline
-clos                                 & 1.00     \\ \hline
-crni                                 & 1.10     \\ \hline
-dich                                 & 1.00     \\ \hline
-fft                                  & 0.96     \\ \hline
-fiff                                 & 1.14     \\ \hline
-lgdr                                 & 1.08     \\ \hline
-matmul                               & 0.99     \\ \hline
-mbrt                                 & 1.00     \\ \hline
-mcpi                                 & 1.00     \\ \hline
-nb1d                                 & 1.59     \\ \hline
-numprime                             & 1.00     \\ \hline
-quadrature                           & 1.00     \\ \hline
-scra                                 & 3.57     \\ \hline
-spqr                                 & 2.77     \\ \hline
-Geometric mean                       & 1.24     \\ \hline
-Geometric mean (Affected Benchmarks) & 2.22     \\ \hline
+Benchmarks     & VeloCty Memory optimisation \\ \hline
+bbai           & 1.18                        \\ \hline
+bubble         & 1.00                        \\ \hline
+capr           & 1.54                        \\ \hline
+clos           & 1.00                        \\ \hline
+crni           & 1.10                        \\ \hline
+dich           & 1.00                        \\ \hline
+fft            & 1.00                        \\ \hline
+fiff           & 1.14                        \\ \hline
+lgdr           & 1.08                        \\ \hline
+matmul         & 0.99                        \\ \hline
+mbrt           & 1.00                        \\ \hline
+mcpi           & 1.00                        \\ \hline
+nb1d           & 1.59                        \\ \hline
+numprime       & 1.00                        \\ \hline
+quadrature     & 1.00                        \\ \hline
+scra           & 3.33                        \\ \hline
+spqr           & 2.77                        \\ \hline
+Geometric mean & 1.23                        \\ \hline
 \end{tabular}
 \caption[Speedup of \velocty code when memory optimisations are enabled]{The table lists the speedups for the different \matlab benchmarks when memory optimisations are enabled compared to baseline \velocty code}
 \label{tab:cmvscwo}
@@ -218,45 +216,25 @@ nb1d      & 1.01    \\ \hline
 \caption[Speedup of Generated Code with Parallel constructs]{The table lists the speedups of the benchmarks in VeloCty code with parallel execution over baseline VeloCty code.}
 \label{tab:cpvscwo}
 \end{table}
-\subsection{Impact of enabling all optimisations on benchmark performance}
-We also calculated the speedup of the VeloCty code with all optimisations enabled compared to the  VeloCty version without checks. The geometric mean of the speedup compared to the VeloCty code without checks is 1.28. The maximum speedup compared to that of  3.16 is given by the matmul benchmark. Not all benchmarks show significant speedups. The performance of such of benchmarks can be improved by optimising the builtin implementations provided by the runtime library.
 
-We observed higher speedups of the generated VeloCty code with all optimisations enabled compared to the baseline \velocty version. This is because the bounds check optimisation improves peformance of the benchmarks compared to the benchmark versions when the checks are enabled. The geometric mean of the speedup is 2.15. The highest speedup of 24.24 is observed for the matmul benchmark. The matmul benchmark benefits from the boundscheck optimisation as well as parallel code generation. Table \ref{tab:covscwcwo} shows the speedups for the generated VeloCty code with all optimisations enabled compared to both the VeloCty code with checks and without checks. 
-\begin{table}[htbp]
+\subsection{Summary of \matlab Results}
+Figure \ref{fig:results_final} shows a chart with the speedups of the diferent versions of \velocty code for the \matlab benchmarks compared to the Mathworks' \matlab interpreter and VM. The blue bars represent the speedups of baseline \velocty, the red bars indicate the speedups of the \velocty versions with bounds check optimisations turned on, the yellow bars indicate the speedups of the \velocty versions with both memory and bounds check optimisations turned on and the green bars indicate the speedups of the \velocty versions with bounds check optimisation, memory optimisation and parallel code execution. 
+\begin{figure}[htbp]
 \centering
-\begin{tabular}{|c|c|c|}
-\hline
-\multirow{2}{*}{Benchmarks} & \multicolumn{2}{c|}{Speedups}                                                                                                                                \\ \cline{2-3} 
-                            & \begin{tabular}[c]{@{}c@{}}compared to VeloCty backend\\ without Checks\end{tabular} & \begin{tabular}[c]{@{}c@{}}Compared to VeloCty backend\\ with Checks\end{tabular} \\ \hhline{|=|=|=|}
-bbai                        & 1.02& 1.23\\ \hline
-bubble                      & 0.96& 8.32\\ \hline
-capr                        & 0.96& 2.52\\ \hline
-clos                        & 1.23& 1.04\\ \hline
-crni                        & - & 2.52\\ \hline
-dich                        & 1.02& 1.76\\ \hline
-fft                         & 0.65& 0.94\\ \hline
-fiff                        & 0.72& 3.01\\ \hline
-lgdr                        & 1.11& 1.12\\ \hline
-matmul                      & 2.32                                                                           & 24.24                                                                       \\ \hline
-mbrt                        & 3.16& 3.23\\ \hline
-mcpi                        & 0.99& 1                                                                           \\ \hline
-nb1d                        & 1.55& 1.62\\ \hline
-numprime                    & 1.03& 1.09\\ \hline
-quadrature                  & 1                                                                              & 1                                                                           \\ \hline
-scra                        & 2.77& 3.04\\ \hline
-spqr                        & 2.64& 2.74\\ \hline
-Geometric mean              & 1.28& 2.15\\ \hline
-\end{tabular}
-\caption{Speedup of generated VeloCty code with all optimisations enabled compared to VeloCty code without optimisations and with and without bounds checks enabled.}
-\label{tab:covscwcwo}
-\end{table}
+\includegraphics[scale=0.45]{Figures/final_mat.png}
+\caption{The figure compares the speedups of different \velocty versions against the Mathworks' interpreter and JIT compiler version for the \matlab benchmarks.}
+\label{fig:results_mat}
+\end{figure}
+
+As we can observe the we see an increase in the geometric means as we add optimisations. The geometric mean for baseline \velocty is 3.76, the geomtric mean for the \velocty version with bounds checks optimisations enabled was 6.10, that for \velocty with bounds checks and memory optimisations was 8.24 and finally the version with all optimisations was 8.5. In case of the \velocty versions with all the optimisations, if we only consider the three benchmarks that are executed in parallel, we observe a geometric mean of 18.27.
+
 \section{Python Results}
 \subsection{Overall Results}
 We ran experiments on 9 Python benchmarks. Similar to the experiments on \matlab benchmarks, we compared the generated VeloCty code without bounds checks to Cython and the CPython interpreter. Figure \ref{fig:results_cwochecks_py} is a bar graph showing the speedup of the generated VeloCty code with checks disabled, the generated VeloCty code with checks enabled and the Cython code compared to the CPython interpreter. The blue bars indicate the speedup of the generated VeloCty code with checks enabled and the red bars indicate the speedup of the Cython code. The geometric mean of the speedups for the generated VeloCty code without checks was 397.17. The largest speedup of 1281.67 was shown by the lud benchmark. The smallest speedup of 40.98 was shown by the fft benchmark. Note that the Python results are compared against a pure interpreter, C-Python, whereas in case of the \matlab, the results were compared against a interpreter with a JIT compiler. A JIT compiler gives better performance compared to a pure interpreter. Hence we see higher speedups for the \velocty code for Python as compared to the ones we observed for \matlab. 
 \begin{figure}[htbp]
 \centering
 \includegraphics[scale=0.5]{Figures/results_cwochecks_py.png}
-\caption{The table compares the speedups of the \velocty code with all optimisations enabled and and speedups of Cython against the C-Python version for the Python benchmarks.}
+\caption{The figure compares the speedups of the \velocty code with all optimisations enabled and and speedups of Cython against the C-Python version for the Python benchmarks.}
 \label{fig:results_cwochecks_py}
 \end{figure}
 
@@ -285,69 +263,59 @@ Geometric mean(Affected Benchmarks)  &  1.63 \\ \hline
 \label{tab:cwvscwopy}
 \end{table}
 \subsection{Impact of Bounds Check optimisations on benchmark performance}
-We also timed versions of the generated VeloCty code with the bounds check optimisations enabled. We compared the slowdown of the VeloCty code with bounds check optimisations with the VeloCty code without checks and the slowdown of the VeloCty code with checks enabled. Table \ref{tab:cwvscopy} lists slowdowns for all the python benchmarks. The geometric mean of slowdown for the VeloCty code with optimisation is 0.96. That is, the version of VeloCty with bounds check optimisation is as fast the version without checks.
-\begin{table}[htbp]
-\centering
-\begin{tabular}{|c|c|c|}
-\hline
-\multirow{2}{*}{Benchmarks} & \multicolumn{2}{c|}{Slowdown}                                                                             \\ \cline{2-3} 
-                            & VeloCty code with checks & \begin{tabular}[c]{@{}c@{}}VeloCty code with bounds \\ check optimisation\end{tabular} \\ \hhline{|=|=|=|}
-arc\_distance               & 1.02& 0.99\\ \hline
-fft                         & 1.09& 0.94\\ \hline
-growcut                     & 1.28& 0.82\\ \hline
-julia                       & 1.01& 1.00\\ \hline
-lud                         & 1.03& 0.97\\ \hline
-pagerank                    & 1.01& 0.99\\ \hline
-pairwise                    & 1.94& 1.03\\ \hline
-spmv                        & 1.73& 0.91\\ \hline
-srad                        & 1.64& 0.97\\ \hline
-Geometric mean              & 1.26& 0.96\\ \hline
-\end{tabular}
-\caption{Slowdown of VeloCty with check optimisation and baseline VeloCty compared to the \velocty version without checks}
-\label{tab:cwvscopy}
-\end{table}
-\subsection{Impact of parallel execution of VeloCty code}
-6 of the 9 benchmarks could be executed in parallel. We calculated the speedups of the VeloCty versions executing in parallel with the baseline VeloCty version. The geometric mean of the speedups was 3.12. Maximum speedup was observed in the pairwise benchmark. The benchmark showed a speedup of 4.19. The smallest speedup of 2.5  was observed by the srad benchmark. Table \ref{tab:cpvscwopy} gives the speedups for the 6 benchmarks that could be executed in parallel.
-\begin{table}[htbp]
+We also timed versions of the generated VeloCty code with the bounds check optimisations enabled. We calculated the speedup of \velocty with bounds check optimisations against the baseline \velocty. Table \ref{tab:cwvscopy} lists slowdowns for all the python benchmarks. The geometric mean of slowdown for the VeloCty code with optimisation is 1.22. The geometric mean of the speedups of benchmarks which showed a significant speedup is 1.79. Maximum speedup was of 2.00 and the smallest was of 1.59. 
+\begin{table}[h]
 \centering
 \begin{tabular}{|c|c|}
 \hline
-Benchmarks     & Speedups    \\ \hhline{|=|=|}
-growcut        & 3.90\\ \hline
-lud            & 2.41\\ \hline
-pagerank       & 2.73\\ \hline
-pairwise       & 2.34\\ \hline
-spmv           & 1.83\\ \hline
-srad           & 2.20 \\ \hline
-Geometric mean & 3.20\\ \hline
+Benchmark      & VeloCty Bounds Check Optimisation \\ \hline
+arc\_distance  & 1.02                              \\ \hline
+fft            & 1.04                              \\ \hline
+growcut        & 1.06                              \\ \hline
+julia          & 1.01                              \\ \hline
+lud            & 1.02                              \\ \hline
+pagerank       & 1.02                              \\ \hline
+pairwise       & 2.00                              \\ \hline
+spmv           & 1.59                              \\ \hline
+srad           & 1.60                              \\ \hline
+Geometric mean & 1.22                              \\ \hline
 \end{tabular}
-\caption{Speedups of the VeloCty parallel version compared to the baseline VeloCty version for the Python benchmarks}
+\caption{Speedup of VeloCty with check optimisation and baseline VeloCty.}
+\label{tab:cwvscopy}
+\end{table}
+\subsection{Impact of parallel execution of VeloCty code}
+6 of the 9 benchmarks could be executed in parallel. We calculated the speedups of the VeloCty versions executing in parallel with the baseline VeloCty version. The geometric mean of the speedups was 2.50. Maximum speedup was observed in the growcut benchmark. The benchmark showed a speedup of 3.96. The smallest speedup of 2.20  was observed by the srad benchmark. Table \ref{tab:cpvscwopy} gives the speedups for the 6 benchmarks that could be executed in parallel.
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+Benchmark      & VeloCty Parallel \\ \hline
+arc\_distance  & 1.02             \\ \hline
+fft            & 1.04             \\ \hline
+growcut        & 3.96             \\ \hline
+julia          & 1.01             \\ \hline
+lud            & 2.41             \\ \hline
+pagerank       & 2.73             \\ \hline
+pairwise       & 2.34             \\ \hline
+spmv           & 1.83             \\ \hline
+srad           & 2.20             \\ \hline
+Geometric mean & 1.86             \\ \hline
+\end{tabular}
+\caption[Speedup of VeloCty parallel for Python]{The table lists the speedups of the VeloCty parallel versions of the Python benchmarks against baseline \velocty code}
 \label{tab:cpvscwopy}
 \end{table}
-\begin{table}[htbp]
-\centering
-\begin{tabular}{|c|c|c|}
-\hline
-\multirow{2}{*}{Benchmarks} & \multicolumn{2}{c|}{Speedups}                \\ \cline{2-3} 
-                            & v/s VeloCty without Checks & v/s baseline \velocty \\ \hhline{|=|=|=|}
-arc\_distance               & 1.00& 1.02\\ \hline
-fft                         & 0.86& 0.95\\ \hline
-growcut                     & 2.48& 3.19\\ \hline
-julia                       & 0.98& 1.00\\ \hline
-lud                         & 2.64& 2.73\\ \hline
-pagerank                    & 3.0& 3.12\\ \hline
-pairwise                    & 3.88& 7.54 \\ \hline
-spmv                        & 2.02& 3.51\\ \hline
-srad                        & 2.15& 3.53\\ \hline
-Geometric mean              & 1.88& 2.38\\ \hline
-\end{tabular}
-\caption{Speedups of VeloCty version with all optimisations compared to VeloCty versions with and without bounds checks}
-\label{tab:copvscwopy}
-\end{table}
-\subsection{Impact of enabling all optimisations on benchmark performance}
-Finally, we calculated the speedups of the VeloCty version with all optimisations enabled and compared them to both the VeloCty version without checks and the version with checks. Table \ref{tab:copvscwopy} lists the calculated speedups compared to both the VeloCty version with bounds checks and without bounds checks. The geometric mean of the speedups over the VeloCty version without checks is 1.88. The highest speedup, 3.88 was observed for the pairwise benchmark, whereas the smallest, 0.87 was observed for the fft benchmark. 
 
-In case of the speedups over the VeloCty version with checks enabled, we observed a geometric mean of 2.38. The maximum speedup, 7.54 was observed for the pairwise benchmark and the smallest speedup, 0.95 was observed for the fft benchmark. 
+\subsection{Summary of Python results}
+Figure \ref{fig:results_final} shows a chart with the speedups of the diferent versions of \velocty code for the Python benchmarks compared to the C-Python interpreter. The blue bars represent the speedups of baseline \velocty, the red bars indicate the speedups of the \velocty versions with bounds check optimisations turned on and the yellow bars indicate the speedups of the \velocty versions with bounds check optimisation and parallel code execution. 
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[scale=0.5]{Figures/final_py.png}
+\caption[Summary of Python Results]{The bar graph gives the speedups of the \velocty backend for diferent \velocty versions compared to the Mathworks' JIT and VM implemenation. Higher is better }
+\label{fig:results_final}
+\end{figure}
+
+Similar to \matlab we can see the geometric mean of the \velocty versions increasing as we add optimisations. The geometric mean of the baseline \velocty version is 164.48 , the geometric mean of the version with bounds check optimisations enabled is 200.8 and the geometric mean when \velocty code is executed in parallel is 400.98. The geometric mean of benchmarks which are executed in parallel is 860.09.
 
 Note that since none of the Python benchmarks contained any array slicing operations or array operations, performance would not differ when the mememory optimisation was used and hence we do not specify those numbers in this section. 
 \section{Summary}

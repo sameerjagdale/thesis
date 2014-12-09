@@ -1,12 +1,276 @@
+\velocty can compile functions written in \matlab and NumPy to C++. The compilation process uses different toolkits such as Velociraptor, \mclab etc. Moreover, it was also necessary for us to understand the semantics of \matlab and NumPy to ensure that the generated C++ code semantically matches the code written in the source language. Additionally, we used C API provided by \matlab and Python to interface the generated code with the source language. This chapter discusses the different toolkits and APIs that were used to develop \velocty. We also compare the semantics of \matlab and NumPy which were important for the implementation of the compiler. 
 \section{Comparison of Matlab and NumPy semantics}
+Our compiler supports two languages, namely \matlab and NumPy. In order to ensure that the code generated matches the semantics of the language from which it was generated, we studied the semantics of both languages. This section discusses the similarities and differences of both languages. 
+\subsection{Array Indexing}
+\matlab supports 1-indexing, that is the array index starts from 1. 
+The array layout is always column major. The upper bound of the index value depends on the number of indices provided. If the number of indices are greater than or equal to the number of dimensions of the array, the maximum value of an index is the size of the dimension. The number of indices can execeed the number of dimensions of the array as long as all the indices greater than the number of dimensions are one. If the number of dimensions of 
+\subsection{Bounds checks}
+\subsection{Builtins functions}
 \section{C APIs}
-\subsection{Mex}
-\subsection{Python C API}
-\section{McLab}
+We used the C APIs provided by \matlab and Python to interface the generated code with the source language. To interface with \matlab, we use the MEX\cite{mex} API and the Python C API is used for Python. 
+\subsection{MEX}
+The Mathworks' MEX provides functions and data structures to allow interfacing code in \matlab with code in C/C++. In order to use these functions, the \textsf{mex.h} header file is required to be included. A compiler to  compile the C/C++ code is also provided. Data between the \matlab code and the C++ code is passed as pointers to MxArrays. The raw array data and meta data can be accessed through different MEX functions. MEX also provides functions to create and destroy MxArrays as well as other basic memory management functions. Table \ref{tab:mexFunc} gives a list of MEX functions that are used for interfacing with the source langauge. 
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+MEX Functions           & Description                                                                                                                                                   \\ \hline
+mxCreateNumericArray    & \begin{tabular}[c]{@{}c@{}}Creates an MxArray given dimensions, \\ number of dimensions, element type\\ and whether the array is real or complex\end{tabular} \\ \hline
+mxCreateDoubleScalar    & \begin{tabular}[c]{@{}c@{}}Creates an MxArray with a single \\ element of type double.\end{tabular}                                                           \\ \hline
+mxDestroyArray          & Frees memory allocated to the MxArray                                                                                                                         \\ \hline
+mxMalloc                & Allocates memory of specified size in bytes                                                                                                                   \\ \hline
+mxFree                  & Frees memory allocated by                                                                                                                                     \\ \hline
+mxGetData               & \begin{tabular}[c]{@{}c@{}}Returns a void pointer to the raw array data\\ of a MxArray\end{tabular}                                                           \\ \hline
+mxSetData               & \begin{tabular}[c]{@{}c@{}}Sets the mxArray's data pointer to given \\ memory.\end{tabular}                                                                   \\ \hline
+mxSetDimensions         & \begin{tabular}[c]{@{}c@{}}Sets the dimensions and number of \\ dimensions of a mxArray\end{tabular}                                                          \\ \hline
+mxGetDimensions         & Returns the dimensions of a mxArray                                                                                                                           \\ \hline
+mxGetNumberOfDimensions & Returns the number of dimensions of a mxArray                                                                                                                 \\ \hline
+\end{tabular}
+\caption[List of MEX functions]{The table lists the MEX functions that were used by \velocty.}
+\label{tab:mexFunc}
+\end{table}
+
+The entry point function for MEX is known as mexFunction. Every C/C++ program that is to be interfaced with \matlab is required to have an implementation of the  mexFunction. Listing \ref{lst:mexFunction} gives  the function signature of the mexFunction. The mexFunction takes four input parameters. The first parameter, \textsf{nlhs} defines the number of output parameters. The second paramater \textsf{plhs} is an array of mxArray pointers. \textsf{plhs} holds the output parameters of the function. The third and fourth parameters, \textsf{nrhs} and \textsf{prhs}, define the number of input parameters and the input parameters of the function. All elements of the plhs array are set to NULL and hence mxArrays need to created in the C/C++ code before the function returns. On the other hand, prhs contains the input mxArrays that have been created by the calling function. 
+\begin{lstlisting}[float,language=lisp, label={lst:mexFunction}, caption={Function signature of mexFunction}]
+void mexFunction(int nlhs, mxArray *plhs[], int nrhs, 
+  const mxArray *prhs[])
+\end{lstlisting}
+
+The C/C++ program can then be compiled using the MEX compiler. The compiler generates a dynamically linked library having the same name as the C/C++ source file. The MEX C/C++ function can then be called from a \matlab program as a regular \matlab function. 
+
+\subsection{C APIs for Python}
+Programs written in C/C++ can be interfaced with Python using the Python/C API. We also use the NumPy/C API passing and returning arrays. The data structures and functions provided to interface with Python can be used by including the header file \textsf{Python.h}.In order to interface with Python code, the C/C++ has to be structured as a Python module. 
+A Python program passes data to the C/C++ program as a single parameter, which is a pointer to a PyObject. If multiple paramaters are to be passed into the function, the PyObject may represent an array of other PyObjects. Unlike MEX, there is no restriction on the name of the entry point function. Listing \ref{lst:pyFunc} gives an example of a C function which serves as an entry point function. The static function, arc\_distance, returns a pointer to a PyObject and take two input parameters, both PyObject pointers. The first input parameter, \textsf{self} is a pointer to the module object. The second parameter, \textsf{args} contains the input arguments of the function. 
+\begin{lstlisting}[float,language=C, label={lst:pyFunc}, caption={Signature of a function that can be called from Python}]
+  static PyObject* arc_distance(PyObject* self, PyObject *args); 
+\end{lstlisting}
+
+The methods that can be accessed from Python in the given module have to listed in an array of structs of the type PyMethodDef. PyMethodDef has four fields: method name as a string, pointer to the method implementation, METH\_VARGS which tells Python how to access the method and finally the documentation for the method. The last entry into the array should have all NULL values to indicate the end of the array. Listing \ref{lst:pyMethod} gives an example of the PyMethodDef array for the function arc\_distance. 
+\begin{lstlisting}[language=C, label={lst:pyMethod}, caption={An Example of the PyMethodDef struct }]
+static PyMethodDef arc_distance_kernelMethods[] =
+   {
+       {"arc_distance",arc_distance,METH_VARARGS,"arc_distance of a circle. "},
+       {NULL,NULL,0,NULL}
+   };
+\end{lstlisting}
+
+Additionally, a struct of type PyModuleDef also needs to be initialised. PyModuleDef describes the module. Listing \ref{lst:pyModule} gives an example of the PyModuleStruct for the module arc\_distance. The struct holds module information such as the name of the module, documentationand the PyMethodDef array among others.
+\begin{lstlisting}[language=C, label={lst:pyModule}, caption={Example of the PyModuleDef struct}]
+ static struct PyModuleDef arc_distance_kernelModule = {
+       PyModuleDef_HEAD_INIT,
+       "arc_distance_kernelModule",
+       NULL,
+       -1,
+      arc_distance_kernelMethods,
+  };
+\end{lstlisting}
+
+ Finally, the C/C++ program is required to implement the module initialisation function. Listing \ref{lst:pyInit} gives an example of the initialisation function. The name of the function is PyInit\_<module name>, that is \textsf{PyInit\_} followed by the name of the module. In this case the name of the module is arc\_distance. A module object is initialised using the method PyModule\_Create which takes the PyModuleDef struct as input. The function import\_array, is used to initialise NumPy specific constructs. 
+\begin{lstlisting}[language=lisp, label={lst:pyInit}, caption={Example of the module initialisation function for the module arc\_distance}]
+ PyMODINIT_FUNC
+   PyInit_arc_distance_kernel(void){
+        PyObject* m = PyModule_Create(&arc_distance_kernelModule);
+       import_array();
+       return m;
+   }
+
+\end{lstlisting}
+\section{\mclab}
+\mclab is an extensible compiler toolkit for \matlab. \mclab provides compilation, analysis and execution tools to optimise \matlab. \mclab provides frameworks to aid static compilation of \matlab programs to other languages such as Fortran and X10. These tools provide analyses which aid easy compilation of \matlab programs to different targets. McSAF, Tamer and Tamer+ are the three frameworks that are used for implementing static compilers for \matlab. 
 \subsection{McSAF}
-\subsection{Tamer and Tamerplus}
+McSAF is a static analysis framework for implementing static analyses for the \matlab language. McSAF provides APIs and the core functionality to impelent static analyses with ease. It also provides an intermediate representation known as McLAST on which the analyses and transformations can be performed. McLAST is a high-level AST\footnote{Abstract Syntax Tree} based representation with a structure close to the \matlab program from which it was generated. McSAF can be used for various purposes such as static compilation to static and dynamic languages, code refactoring etc. 
+
+The kind analysis\cite{Doherty:2011:KAM:2076021.2048077}, implemented using McSAF, separates array index operations from function calls. This analysis is crucial because both array index operations and function calls are syntactically similarly and hence can not be differentiated statically based on syntax alone. 
+
+The colon expression to range expression transformation was also performed using the McSAF framework. This transformation was a contribution on this thesis and is explained in Section \ref{sec:colonExpr}. 
+
+Table \ref{tab:mcsaf} gives an example of a \matlab function babai, and the equivalent McSAF code that was generated. As we can observe, the generated McSAF code is very close to the original \matlab function. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+\matlab & McSAF \\
+\hline
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+function z_hat = babai(R,y)
+n=length(y);
+z_hat=zeros(n,1);
+z_hat(n)=round(y(n)./R(n,n));
+
+for k=n-1:-1:1
+    par=R(k,k+1:n)*z_hat(k+1:n);
+    ck=(y(k)-par)./R(k,k);
+    z_hat(k)=round(ck);
+end
+
+end
+
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+function [z_hat] = babai(R, y)
+  n = length(y);
+  z_hat = zeros(n, 1);
+  z_hat(n) = round((y(n) ./ R(n, n)));
+  for k = ((n - 1) : (-1) : 1)
+    par = (R(k, ((k + 1) : n)) * 
+			z_hat(((k + 1) : n)));
+    ck = ((y(k) - par) ./ R(k, k));
+    z_hat(k) = round(ck);
+  end
+end
+\end{lstlisting}
+
+}
+ \\
+\hline
+\end{tabular}
+\caption[Example of a \matlab function and the equivalent McSAF code. ]{The Table gives an example of a \matlab function babai and the generated McSAF code. }
+\label{tab:mcsaf}
+\end{table}
+\subsection{Tamer}
+Similar to McSAF, Tamer is an object oriented toolkit to implement analyses and transformations on \matlab. Tamer facilitates the static compilation of \matlab programs to different static languages. 
+
+Given an entry point function, Tamer generates a complete callgraph. It also handles the large number of \matlab builtins through the Builtin framework.For every function in the callgraph, Tamer converts the function's McSAF intermediate representation, McLAST and genenerates Tame IR, as three address code\footnote{In a three address code based IR, each statement as at most three operands} based intermediate representation with specialised AST nodes. 
+
+Tamer implements analyses on Tame IR which aids static compilation. These include the value analysis which estimates \matlab types, the shape analysis\cite{Li:2014} which infers the dimensions of the variables and the IntegerOkay\cite{vkumar14} which identifies the variables having integer types. 
+
+Table \ref{tab:tamer} gives an example of a \matlab function and the equivalent Tamer code. As we can see, since every statement is broken down into three address code, the length of the generated Tame IR code is quite large.Moreover, we can also observe that operators like \textsf{+}, \textsf{-} have been replaced by function calls. This is because in \matlab, operators are syntactic sugar and are replaced by function calls during execution. 
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+\matlab & McSAF \\
+\hline
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+function z_hat = babai(R,y)
+n=length(y);
+z_hat=zeros(n,1);
+z_hat(n)=round(y(n)./R(n,n));
+
+for k=n-1:-1:1
+    par=R(k,k+1:n)*z_hat(k+1:n);
+    ck=(y(k)-par)./R(k,k);
+    z_hat(k)=round(ck);
+end
+
+end
+
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+function  [z_hat] = babai(R, y)
+  [n] = length(y);                    
+  mc_t20 = 1;                        
+  [z_hat] = zeros(n, mc_t20);        
+  [mc_t3] = y(n);                    
+  [mc_t4] = R(n, n);                 
+  [mc_t2] = rdivide(mc_t3, mc_t4);   
+  [mc_t0] = round(mc_t2);            
+  z_hat(n) = mc_t0;                  
+  mc_t21 = 1;                        
+  [mc_t18] = minus(n, mc_t21);       
+  mc_t22 = 1;                        
+  [mc_t19] = uminus(mc_t22);         
+  mc_t25 = 1;                        
+  for k = (mc_t18 : mc_t19 : mc_t25);
+    mc_t10 = k;                       
+    mc_t23 = 1;                       
+    [mc_t12] = plus(k, mc_t23);       
+    mc_t13 = n;                       
+    [mc_t11] = colon(mc_t12, mc_t13); 
+    [mc_t5] = R(mc_t10, mc_t11);      
+    mc_t24 = 1;                       
+    [mc_t8] = plus(k, mc_t24);        
+    mc_t9 = n;                        
+    [mc_t7] = colon(mc_t8, mc_t9);    
+    [mc_t6] = z_hat(mc_t7);           
+    [par] = mtimes(mc_t5, mc_t6);     
+    [mc_t16] = y(k);                  
+    mc_t17 = par;                     
+    [mc_t14] = minus(mc_t16, mc_t17); 
+    [mc_t15] = R(k, k);               
+    [ck] = rdivide(mc_t14, mc_t15);    
+    [mc_t1] = round(ck);    
+    z_hat(k) = mc_t1;        
+  end
+end
+\end{lstlisting}
+
+}
+ \\
+\hline
+\end{tabular}
+\caption[Example of a \matlab function and the equivalent Tame IR code. ]{The Table gives an example of a \matlab function babai and the generated Tame IR code. }
+\label{tab:tamer}
+\end{table}
+\section{Tamer+}
+Tamer+ is a code aggregation framework. Since Tame IR is a three address code based IR, the code generated from Tame IR is long  and not human readable, due to the use of temporary variables. Hence, in order to improve code readability, Tamer+ aggregates multiple statements together and reduces the number of statements. Tamer+ takes as input Tame IR and outputs McSAF IR (McLAST). The generated code has fewer statements and is hence more readable.
+
+Table \ref{tab:tamer+} gives an example of a \matlab function and the equivalent McSAF code generated from Tame IR by Tamer+. The code length is almost the same as the original \matlab function. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+
+\matlab & McSAF(Generated by Tamer+) \\
+\hline
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+function z_hat = babai(R,y)
+n=length(y);
+z_hat=zeros(n,1);
+z_hat(n)=round(y(n)./R(n,n));
+
+for k=n-1:-1:1
+    par=R(k,k+1:n)*z_hat(k+1:n);
+    ck=(y(k)-par)./R(k,k);
+    z_hat(k)=round(ck);
+end
+
+end
+
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+function [z_hat] = babai(R, y)
+  [n] = length(y);
+  [z_hat] = zeros(n, 1);
+  z_hat(n) = round(rdivide(y(n), R(n, n)));
+  for k = (minus(n, 1) : uminus(1) : 1);
+    [par] = mtimes(R(k, colon(plus(k, 1), n)), z_hat(colon(plus(k, 1), n)));
+    [ck] = rdivide(minus(y(k), par), R(k, k));
+    z_hat(k) = round(ck);
+  end
+end
+\end{lstlisting}
+
+}
+ \\
+\hline
+\end{tabular}
+\caption[Example of a \matlab function and the equivalent McSAF code generated by Tamer+ . ]{The Table gives an example of a \matlab function babai and the generated McSAF code generated from Tame IR by Tamer+. }
+\label{tab:tamer+}
+\end{table}
 \section{Velociraptor}
+Velociraptor is a compiler toolkit aimed at improving performance of array-based languages such as \matlab and NumPy. The toolkit consists of an intermediate representation known as VRIR. The toolkit also provides various analysis on transformation on the IR. A compiler known as PyVrir, for Python to VRIR is also provided. 
 \subsection{VRIR}
+VRIR is high-level strongly typed AST based intermediate representation. VRIR is designed to be flexible to accomodate semantics of different scientific languages such as \matlab and Python's NumPy library. VRIR supports various array indexing schemes such as 0-indexing, 1-indexing and negative indexing and multiple array layouts such as row major, column major and stride major. VRIR also supports parallelism through constructs such as parallel for loop, map and reduce etc. VRIR can be generated as a string in the s-expression format which will then be converted to a C++ based AST. Alternatively, the C++ AST can directly be generated.
+
+
 \subsection{Parser}
+If a language frontend compiling to VRIR, generates VRIR in the s-expression format and dumps it in a file, this file can be given to a parser implemented using Antlr\footnote{Information about Antlr can be found here \url{http://www.antlr3.org/}}. The parser generates an Antlr AST which is then converted into a C++ VRIR AST. This AST is then used for optimisations and code generation.  
 \subsection{Analyses}
+The Velociraptor toolkit also performs analyses and optimisations on VRIR which  can be resusable across compiler backends. The simplification pass simplifies expressions containing array operations into a three address code format. This simplification was useful to us while implementing the memory optimisation described in Section \ref{sec:memoptimise}. The preliminary bounds check eliminations analysis, identifies and eliminates redundant bounds checks.
 

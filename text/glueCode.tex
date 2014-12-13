@@ -1,4 +1,4 @@
-The \velocty compiler generates C++ code for functions identified as computationally intensive by the user. The rest of the code is not compiled. Thus, since the computationally intensive functions and the remaining part of the program are in two different programming languages, namely C++ and the source language, an interface between the two code sections is required. Most high-level languages provide an API to interface with C/C++. PyVrir generates the required interface or glue code for Python. However, no glue code generator existed for \matlab.  Hence, along with generating VRIR, we also generate C++ code required to interface \matlab programs with the generated functions. The \matlab MEX API is used for the interface. 
+The \velocty compiler generates C++ code for functions identified as computationally intensive by the user. The rest of the code is not compiled. Thus, since the computationally intensive functions and the remaining part of the program are in two different programming languages, namely C++ and the source language, an interface between the two code sections is required. Most high-level languages provide an API to interface with C/C++. PyVrir generates the required interface or glue code for Python. However, no glue code generator exists for \matlab.  Hence, along with generating VRIR, we also generate C++ code required to interface \matlab programs with the generated functions. The \matlab MEX API is used for the interface. 
 \section{Generating code for including header files}
 Header files are required for the following reasons.
 \begin{itemize}
@@ -17,7 +17,7 @@ The header files are included using the "include" preprocessor directive.
 Listing \ref{lst:glueCodeHeader} gives an example of the header files that are generated. The header file "mex.h" provides the set of declarations for the MEX API functions. The header files matrix\_ops.hpp library\_ops.hpp contain class and function declarations of our runtime library. Function declarations of the generated code are provided by matmul\_pImpl.hpp. The file omp.h is provided for OpenMP functions and directives. 
 \section{Generating mexFunction}
 The entry point for any shared library that can be called from \matlab is called mexFunction. Listing \ref{lst:mexFunction} gives an example of the mexFunction. The function returns void. It takes four input arguments. The first argument nlhs defines the number of output parameters of the function and the second argument is an array of output paramaters. The output parameters are of type mxArray which is a \matlab specific array representation. 
-\begin{lstlisting}[float,language=c,caption={The entry point function for the MEX API},label={lst:mexFunction}]
+\begin{lstlisting}[language=c,caption={The entry point function for the MEX API},label={lst:mexFunction}]
 void mexFunction(int nlhs, mxArray *plhs[],
     int nrhs,const mxArray *prhs[])
 \end{lstlisting}
@@ -26,8 +26,8 @@ The arrays in the generated functions are represented as VrArrays. VrArrays are 
 
 We have implemented methods which convert mxArrays to VrArrays. There is a separate method for each VrArray type. Listing \ref{lst:getVrArray} gives an example of the function used to convert mxArrays to VrArrays. The function is called getVrArrayF64 which takes a pointer to a mxArray as input and returns a VrArrayF64, an array of doubles. Table \ref{tab:getVrArray} gives a list of all the functions for converting VrArrays to different mxArrays. 
 
-\begin{lstlisting}[float,language=c,caption={Converting mxArrays to VrArrays},label={lst:getVrArray}]
-VrArrayF64 inputData1 = getVrArrayF64(rhs[1]);
+\begin{lstlisting}[language=c,caption={Converting mxArrays to VrArrays},label={lst:getVrArray}]
+VrArrayF64 y = getVrArrayF64(rhs[1]);
 \end{lstlisting}
 
 \begin{table}[htbp]
@@ -49,14 +49,14 @@ getVrArrayI64  & Returns an array of 64 bit integers  \\ \hline
 There is an additional overhead while converting from complex mxArrays to complex VrArrays because the representation of the data in the two array types is different. mxArrays store the real and imaginary data as separate arrays. On the other hand, in VrArrays, the real and imaginary data is interleaved. Thus, for every element of the array, the real value is immediately followed by the imaginary value.
 
 Scalar values are also passed as mxArrays by \matlab where as they are represented using the C++ primitive types. The glue code also converts the mxArrays to scalar types when required. Listing \ref{lst:getScalar} gives an example of the conversion. The example shows a mxArray pointer rhs[5] being converted to a scalar value inputData5. The MEX function, mxGetScalar returns a scalar double value. A cast is required for all types other than double.
-\begin{lstlisting}[,language=c,caption={Converting mxArrays to scalars},label={lst:getScalar}]
+\begin{lstlisting}[language=c,caption={Converting mxArrays to scalars},label={lst:getScalar}]
  double inputData5 = static_cast<double>(mxGetScalar(rhs[5]));
 \end{lstlisting}
 
 \subsection{Function Call}
 Once all the input parameters are converted to VrArrays or C++ primitive types, we make a call to the generated entry point function. The output of the function is stored in either a VrArray or a scalar variable if the function returns a single variable. Listing \ref{lst:funcCall} gives an example of the generated function call. The listing shows a call to the function babai which returns a VrArrayF64 which is assigned to the variable retVal.
 \begin{lstlisting}[language=c,caption={Call to generated function},label={lst:funcCall}]
-VrArrayF64 retVal = babai(inputData0,inputData1);
+VrArrayF64 retVal = babai(R,y);
 \end{lstlisting}
 
 The generated function can also return multiple variables of different types. In this case the generated function packages the  variables into a struct and return the struct. More information about multiple returns can be found in Subsection \ref{subsec:multreturn}. Listing \ref{lst:funcCallMult} gives an example of a call to a function with multiple returns. The function name is nb1d which takes 7 inputs and returns a struct of type struct\_nbody1d\_ret retVal.
@@ -68,7 +68,7 @@ struct_nbody1d_ret retVal = nbody1d(inputData0,inputData1,
 \subsection{Converting to mxArrays}
 The output of the generated function has to be returned to \matlab. The output can consist of a single or multiple variables. The output can be returned via the array plhs. As mentioned earlier, plhs is an array of mxArray pointers. Hence the output of the generated function, which is either a VrArray or a C++ primitive type has to be converted to mxArrays and stored as successive plhs elements. We use MEX API functions to do the same. 
 
-In case of VrArrays, We first have to create an array of the required size. We do this using the function mxCreateNumericArray. This function takes as input, the number of dimensions, an array of dimension sizes, the data type of the array and its complexity. We use the ndims and dims fields from the VrArray to specify the number of dimensions and the sizes of each dimensions. Once the array is created, we set the mxArray data by passing the pointer to the data inside the VrArray to the the function mxSetData.
+In case of VrArrays, we first have to create an array of the required size. We do this using the function mxCreateNumericArray. This function takes as input, the number of dimensions, an array of dimension sizes, the data type of the array and its complexity. We use the ndims and dims fields from the VrArray to specify the number of dimensions and the sizes of each dimensions. Once the array is created, we set the mxArray data by passing the pointer to the data inside the VrArray to the the function mxSetData.
 
 For scalar values, we use the MEX function mxCreateNumericMatrix which accepts the row and column sizes as well as the complexity and  the type of the array.We set the row and column sizes as one. We then fetch a pointer to the data of the newly created mxArray and set the zero$^{th}$ element to the scalar value. 
 

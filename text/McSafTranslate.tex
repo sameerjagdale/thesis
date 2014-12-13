@@ -1,32 +1,30 @@
-As mentioned in the earlier chapters, \velocty supports two languages, \matlab and Python. The \velocty backend takes VRIR as input and generates C++ code. We use PyVrir that is part of the Velociraptor toolkit generate VRIR from Python. However, no such tool exists to generate VRIR from \matlab to VRIR. The McLab toolkit is a framework to aid static compilation of \matlab to different langauges. In order, to support the compilation of \matlab programs to C++ through \velocty, we implemented a VRIR generator using the McLab toolkit. Section \ref{sec:comppipe} provided an overview of the compilation pipeline from \matlab to VRIR and then to C++. As mentioned in the section, the VRIR generator takes an input McSAF IR and generates the s-expression version of VRIR.
+As mentioned in the earlier chapters, \velocty supports \matlab and Python's NumPy library. The \velocty backend takes VRIR as input and generates C++ code. We use PyVrir that is part of the Velociraptor toolkit generate VRIR from Python. However, no such tool exists to generate VRIR from \matlab to VRIR. The \mclab toolkit is a framework to aid static compilation of \matlab to different langauges. In order, to support the compilation of \matlab programs to C++ through \velocty, we implemented a VRIR generator using the \mclab toolkit. Section \ref{sec:comppipe} provided an overview of the compilation pipeline from \matlab to VRIR and then to C++. As mentioned in the section, the VRIR generator takes an input McSAF IR and generates the S-expression version of VRIR.
 
-VRIR generation had challenges. The McSAF IR is a \matlab specific IR whereas VRIR is designed to handle semantics of different langauges and thus contains flags to specify semantic information such as array layout, indexing scheme etc. We had to ensure the appropriate flags were set to correctly represent semantics of \matlab. Moreover, VRIR is a strongly typed AST representation. Every expression node in VRIR has a type  and shape information associated with it. McSAF does not explicitly hold this information and hence had to be determined during the compilation process. Additionally, \matlab functions do not need an explicit return statement for the output. When a return statement is explictly provided, the parameters that need to be returned are not specified. This is because the output parameters are specified in the function signature. On the other hand, VRIR does not support output parameters and only supports output types. This difference in IR structure also had to be handled.
+VRIR generation had challenges. The McSAF IR is a \matlab specific IR whereas VRIR is designed to handle semantics of different langauges and thus contains flags to specify semantic information such as array layout, indexing scheme etc. We had to ensure the appropriate flags were set to correctly represent the semantics of \matlab. Moreover, VRIR is a strongly typed AST representation. Every expression node in VRIR has a type and shape information associated with it. McSAF does not explicitly hold this information and hence had to be determined during the compilation process. Additionally, \matlab functions do not need an explicit return statement for the output. When a return statement is explicitly provided, the parameters that need to be returned are not specified. This is because the output parameters are specified in the function signature. On the other hand, VRIR does not support output parameters and only supports output types. This difference in IR structure also had to be handled.
 
 This chapter discusses the compilation of various nodes of the McSAF IR to VRIR, generation of the symbol table and how the types and shapes of expressions are determined.
 \section{Mapping types}
-In order to generate VRIR types, we require type and shape information as well as whether the symbol is real or complex. This information is obtained through the type analysis , the shape analysis and the isComplex analysis that were performed on Tamer. 
+In order to generate VRIR types, we require type and shape information as well as whether the symbol is real or complex. This information is obtained through the type analysis , the shape analysis and the isComplex analysis that were performed on Tamer. All variables and expressions are mapped to one of 5 VRIR types which are collectively known as VTypes.
 
-Types in \matlab are known as MClasses. Table \ref{tab:mclassList} gives a list of MClasses that are supported by the VRIR generator. Note that the VRIR generator does not support other MClasses such as \textsf{char}, unsigned integers and 16 and 8 bit integers. 
+
+\subsection{Scalar Type}
+Scalar types are used for scalar symbols. In this case the shape of the symbol will have two dimensions each of size one. The scalar type also as a \textsf{ctype} flag which determines whether the symbol is real or complex. The symbol is considered to be real if the flag is set to zero and complex if it is set to one. The type of the data also needs to be specified in the generated VRIR. Types in \matlab are known as MClasses. Table \ref{tab:mclassList} gives a list of MClasses that are supported by the VRIR generator. Note that the VRIR generator does not support other MClasses such as \textsf{char}, unsigned integers and 16 and 8 bit integers. 
 \begin{table}[htbp]
 \centering
-\begin{tabular}{|c|c|}
+\begin{tabular}{|c|c|c|}
 \hline
-MClass  & Description           \\ \hline
-Logical & Boolean type          \\ \hline
-Int32   & 32 bit Integer        \\ \hline
-Int64   & 64 bit Integer        \\ \hline
-Float32 & 32 bit Floating point \\ \hline
-Float64 & 64 bit Floating point \\ \hline
+MClass  & VRIR Scalar Type & Description           \\ \hhline{|=|=|=|}
+Logical & bool &Boolean type          \\ \hline
+Int32   & int32 &32 bit Integer        \\ \hline
+Int64   & int64 &64 bit Integer        \\ \hline
+Float32 & float32 & 32 bit Floating point \\ \hline
+Float64 & float64 & 64 bit Floating point \\ \hline
 \end{tabular}
-\caption[List of \matlab types]{The table lists the different \matlab types known as MClasses  that are supported by the VRIR generator.}
+\caption[List of \matlab types]{The table lists the different \matlab types known as MClasses  that are supported by the VRIR generator and the Scalar types generated in VRIR.}
 \label{tab:mclassList}
-\end{table}
-Shape information is used to determine whether the symbol is an array or a scalar. 
+\end{table} 
 
-Types in VRIR are known as VTypes. There are 5 different VTypes. 
-\subsection{Scalar Type}
-Scalar types are used for scalar symbols. In this case the shape of the symbol will have two dimensions each of size one. The scalar type also as a \textsf{ctype} flag which determines whether the symbol is real or complex. The symbol is considered to be real if the flag is set to zero and complex if it is set to one. Table \ref{tab:scalTypeMat} gives an example of VRIR for the scalar type from a \matlab variable \texttt{x}.  The example describes a scalar symbol that is of type \textsf{float64} and is \textsf{real}. 
-
+Table \ref{tab:scalTypeMat} gives an example of VRIR for the scalar type from a \matlab variable \texttt{x}.  The example describes a scalar symbol that is of type \textsf{float64} and is \textsf{real}. 
 \begin{table}[htbp]
 \centering
 \begin{tabular}{|l|l|}
@@ -51,7 +49,8 @@ x = 0;
 \label{tab:scalTypeMat}
 \end{table}
 \subsection{Array Type}
-The array type is used to represent types for \matlab arrays. Arrays can have two or more dimensions and at least one of the dimension sizes have to be greater than one. Note that although \matlab consider scalars to be 1x1 matrices, we make the distinction between scalars and arrays. Array types of VRIR contain information about the number of dimensions of the array and the array layout. The array layout can be \textsf{rowmajor} \textsf{colmajor} and \textsf{strided} The array layout can be \textsf{rowmajor}, \textsf{colmajor} and \textsf{strided}. However, in case of \matlab the layout is always \textsf{colmajor}. also contain a child node of scalar type. The scalar type holds information about the type of the array elements as well as whether they are \textsf{real} or \textsf{complex}. Table \ref{tab:arrTypeMat} gives an example of the generated array type. The example shows a variable array that is assigned to a 3x3 matrix of using the zeros builtin function. The generated VRIR array type contains a ndims attribute which is set to 2 since there are two dimensions, and the array layout attribute is set to colmajor since all arrays in \matlab are column major. Using the child scalar type node of the array type, we can determine that each element of the array is of type \textsf{float64} and that each element is \textsf{real}. 
+The array type is used to represent types for \matlab arrays. Arrays can have two or more dimensions and at least one of the dimension sizes have to be greater than one. Note that although \matlab considers scalars to be 1x1 matrices, we make the distinction between scalars and arrays. Shape information is used to determine whether the symbol is an array or a scalar. Array types of VRIR contain information about the number of dimensions of the array and the array layout. The array layout can be \textsf{rowmajor}, \textsf{colmajor} and \textsf{strided}. However, in case of \matlab the layout is always \textsf{colmajor}. Array Types also contain a child node of scalar type. The scalar type holds information about the type of the array elements as well as whether they are \textsf{real} or \textsf{complex}. Table \ref{tab:arrTypeMat} gives an example of the generated array type. The example shows a variable array that is assigned to a 3x3 matrix of using the zeros builtin function. The generated VRIR array type contains a ndims attribute which is set to 2 since there are two dimensions, and the array layout attribute is set to colmajor since all arrays in \matlab are column major. Using the child scalar type node of the array type, we can determine that each element of the array is of type \textsf{float64} and that each element is \textsf{real}. 
+
 \begin{table}[htbp]
 \centering
 \begin{tabular}{|l|l|}
@@ -78,10 +77,10 @@ x = zeros(3,3);
 \label{tab:arrTypeMat}
 \end{table}
 \subsection{Void Type}
-The void type is generally used as part of the Func Type to convey the absence of the input or output parameters.
-\subsection{Func Type}
+The void type is generally used as part of the Function type to convey the absence of the input or output parameters.
+\subsection{Function Type}
 \label{subsec:functypeMat}
-Func types are associated with function definitions and function handles. They contain information about the types of the input and out parameters of the function. The func type node contains two child nodes, intypes and outtypes. Both nodes will have children that can be other VTypes such as scalar types, array types etc. The function types are part of the function node of VRIR. Table \ref{tab:funcTypeMat} gives an example of the func type generated for the function babai. The function accepts two input parameters both of which are arrays and returns another array. The types of the input arguments are listed inside the intypes child whereas the output parameters are listed inside outtypes. Note that the body of the function is replaced by statement inside chevrons which acts as a place holder. 
+Function types are associated with function definitions and function handles. They contain information about the types of the input and out parameters of the function. The \textsf{functype} node contains two child nodes, \textsf{intypes} and \textsf{outtypes}. Both nodes will have children that can be other VTypes such as scalar types, array types etc. The function types are part of the function node of VRIR. Table \ref{tab:funcTypeMat} gives an example of the Function type generated for the function babai. The function accepts two input parameters both of which are arrays and returns another array. The types of the input arguments are listed inside the intypes child whereas the output parameters are listed inside outtypes. Note that the body of the function is replaced by a statement inside chevrons which acts as a place holder. 
 \begin{table}[htbp]
 \centering
 \begin{tabular}{|l|l|}
@@ -122,16 +121,44 @@ end;
 \label{tab:funcTypeMat}
 \end{table}
 \subsection{Tuple Type}
-Tuple types are used to define data structures which can have data of different types. 
+Tuple types are used to define data structures which can have data of different types. Table \ref{tab:tupletype} gives an example of the tuple type. The table shows a function call to \textsf{spqr} which has multiple returns. The function call expression as well as the expression on the LHS will both have tuple types. In this case the tuple type specifies that the two variables being returned have VTypes, scalar type and array type respectively. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\matlab &  generated VRIR\\
+\hline
+{
+\begin{lstlisting}[language=matlab,frame=none, numbers=none]
+[nc, r]  = spqr(a,tol,maxrc)
+\end{lstlisting}
+}
+&
+{
+\begin{lstlisting}[language=lisp,frame=none, numbers=none]
+(tupletype
+	(float64 :ctype 0)
+	(arraytype :layout colmajor :ndims 2
+		(float64 :ctype 0)
+	)
+)
+\end{lstlisting}
+} \\
+\hline
+\end{tabular}
+\caption[Example of the Tuple Type]{The table gives an example of a call to a function with multiple returns in \matlab and the equivalent VRIR tuple type that is generated.}
+\label{tab:tupletype}
+\end{table}
+
 \subsection{Domain Type}
-The domain type is associated with the domain expression explained in Subsection \ref{subsec:domainExpr}. Domain expressions themselves are only associated with for or parallel for loop statements. Domain types specify the types of all the iterator variables of the loop statements. The domain type has an attribute ndims which specifies the number of iteration variables of the loop. In case of \matlab, there can only be one iteration variable per loop. Listing \ref{lst:domaintype} gives an example of a domain type for a single iteration variable that is of type \textsf{float64}. 
-\begin{lstlisting}[float,language=lisp, label={lst:domaintype}, caption={Symbol table in VRIR}]
+The domain type is associated with the domain expression explained in Subsection \ref{subsec:domainExpr}. Domain expressions themselves are only associated with For or parallel For loop statements. Domain types specify the types of all the iterator variables of the loop statements. The domain type has an attribute ndims which specifies the number of iteration variables of the loop. In case of \matlab, there can only be one iteration variable per loop. Listing \ref{lst:domaintype} gives an example of a domain type for a single iteration variable that is of type \textsf{float64}. 
+\begin{lstlisting}[language=lisp, label={lst:domaintype}, caption={An example of the domain type in VRIR. }]
 (domaintype :ndims 1 (float64 :ctype 0))
 \end{lstlisting}
 
 \section{Symbol Table}
-The symbol table contains a list of symbols that are defined inside a function in VRIR. The table contains the name and the type of each symbol. Moreover, there is a unique id associated with every symbol using which it is referenced in the function. There is a symbol table for every function in VRIR. Listing \ref{lst:symtab} gives an example of a symbol table in VRIR. The symbol table contains a set of sym nodes each having a unique id. For example, the sym node with id 5 on line 2 is the symbol par which is of type float64. The VRIR generator adds symbols when it comes across new symbols while traversing the function's abstract syntax tree. The VRIR code for the symbol table is then generated after the function body.
-\begin{lstlisting}[float,language=lisp, label={lst:symtab}, caption={Symbol table in VRIR}]
+The symbol table contains a list of symbols that are defined inside a function in VRIR. The table contains the name and the type of each symbol. Moreover, there is a unique id associated with every symbol using which it is referenced in the function. There is a symbol table for every function in VRIR. Listing \ref{lst:symtab} gives an example of a symbol table. The symbol table contains a set of sym nodes each having a unique id. For example, the sym node with id 5 on line 2 is the symbol par which is of type \textsf{float64}. The VRIR generator adds symbols when it comes across new symbols while traversing the function's abstract syntax tree. The VRIR code for the symbol table is then generated after the function body.
+\begin{lstlisting}[language=lisp, label={lst:symtab}, caption={Symbol table in VRIR}]
 (symtable
 	(sym :id 5 :name par 
 		(float64 :ctype 0)) 
@@ -150,7 +177,7 @@ The symbol table contains a list of symbols that are defined inside a function i
 \end{lstlisting}
 \section{Generating the Module VRIR node}
 The root node of VRIR is the module. Every valid VRIR must contain the module as its root node. The module an attribute indexing which defines the type of array indexing used. The attribute can have two values \textsf{0} indicating zero indexing and \textsf{1} indicating one indexing. Since the \matlab arrays are one indexed, the indexing attribute is always set to \textsf{1}. The module node also contains a name attribute specifying the name of the module. Additionally, it contains a \textsf{fns} child node which itself has multiple function nodes as its children. Listing \ref{lst:moduleGen} gives an example of the module node of VRIR. The name of the module is babai and the indexing attribute is set to one. 
-\begin{lstlisting}[float,language=lisp, label={lst:moduleGen}, caption={The listing gives an example of a VRIR module that is generated by the VRIR generator.}]
+\begin{lstlisting}[language=lisp, label={lst:moduleGen}, caption={The listing gives an example of a VRIR module that is generated by the VRIR generator.}]
 (module :name babai :indexing 1
 	(fns
 		<functions> 
@@ -168,7 +195,7 @@ The root node of VRIR is the module. Every valid VRIR must contain the module as
 \item Body : The body represents the body of the function. It consists of a list of statements. 
 \item Symbol Table : Contains information about the symbols used in the function. 
 \end{itemize}
-The Table \ref{tab:funcGen} gives an example of the function VRIR node for the \matlab function \textsf{babai}. The function has two input arguments and one output parameter. Thus the intypes has two Vtype nodes and the outtype has a single VType node. Moreover, Since there are two input arugments, the arglist has two arg nodes. 
+The Table \ref{tab:functionGen} gives an example of the function VRIR node for the \matlab function \textsf{babai}. The function has two input arguments and one output parameter. Thus the intypes has two Vtype nodes and the outtype has a single VType node. Moreover, Since there are two input arguments, the arglist has two arg nodes. 
 \begin{table}[htbp]
 \centering
 \begin{tabular}{|l|l|}
@@ -212,12 +239,12 @@ end;
 \hline
 \end{tabular}
 \caption[Function example for \matlab]{The table shows an example of the generated Function VRIR node  for the function babai in \matlab. }
-\label{tab:funcGen}
+\label{tab:functionGen}
 \end{table}
 \section{Mapping statements}
 Many of the statements in \matlab have equivalent VRIR statement nodes. However, some require additional processing while generating their VRIR equivalent. 
 \subsection{Assignment Statements}
-Assignment statements in \matlab are compiled to the assignment statement node in VRIR. The assignment statement node of VRIR contains two child nodes, lhs and rhs. As the names suggest, the left hand side expression of assignment statement in \matlab is compiled to an expression inside the lhs node and the right hand side expression is compiled to an expression inside the rhs node. Table \ref{tab:assignGen} gives an example of a \matlab statement that is compiled to a assignment statement node in VRIR. The left hand side is a scalar variable \textsf{n} and the right hand side is a call to the function \textsf{length}. 
+Assignment statements in \matlab are compiled to the assignment statement node in VRIR. The assignment statement node of VRIR contains two child nodes, \textsf{lhs} and \textsf{rhs}. As the names suggest, the left hand side expression of assignment statement in \matlab is compiled to an expression inside the \textsf{lhs} node and the right hand side expression is compiled to an expression inside the \textsf{rhs} node. Table \ref{tab:assignGen} gives an example of a \matlab statement that is compiled to a assignment statement node in VRIR. The left hand side is a scalar variable \textsf{n} and the right hand side is a call to the function \textsf{length}. 
 \begin{table}[htbp]
 \centering
 \begin{tabular}{|l|l|}
@@ -260,7 +287,7 @@ n = length(y)
 \label{tab:assignGen}
 \end{table}
 \subsubsection{Copy statements}
-We define copy statements as assignment statement where both the left hand side and right hand side are array variables. Listing \ref{lst:copyStmtGen} gives an example of a copy statement in \matlab. An array \textsf{B} is copied into another array \textsf{A}. According to \matlab semantics, a deep copy\footnote{The data is actually copied from one array to the other} has to be performed. However, VRIR supports a reference copy\footnote{Only the reference of the array is copied to the other array. Thus both arrays are referring to the same data.}. Hence an explicit copy function call has to be added. We make use the copy library function of VRIR that is explained in \ref{subsec:libcall}.  The right hand side is added as an argument of the copy function and the function call itself becomes the rhs of the assignment statement.
+We define copy statements as assignment statement where both the left hand side and right hand side are array variables. Listing \ref{lst:copyStmtGen} gives an example of a copy statement in \matlab. An array \textsf{B} is copied into another array \textsf{A}. According to \matlab semantics, a deep copy\footnote{The data is actually copied from one array to the other} has to be performed. However, VRIR supports a reference copy\footnote{Only the reference of the array is copied to the other array. Thus both arrays are referring to the same data.}. Hence an explicit copy function call has to be added. We make use the copy library function of VRIR that is explained in Subsection \ref{subsec:paramGen}.  The right hand side is added as an argument of the copy function and the function call itself becomes the rhs of the assignment statement.
 \begin{lstlisting}[float,language=lisp, label={lst:copyStmtGen}, caption={The listing gives an example of a copy statement in \matlab. }]
 B = zeros(3,3);
 A = B;
@@ -310,9 +337,9 @@ A = B;
 \label{tab:copyGen}
 \end{table}
 \subsection{For and Parallel For Statements}
-The \matlab for statement is mapped to the for statement node of VRIR and the parfor statement to the pForStmt in VRIR. The McSAF IR does not have a separate parfor node. Instead the for statement node contains a boolean flag which when set to true implies that the node is a parfor statement. The flag when set to false implies that the node is a for statement. 
+The \matlab For statement is mapped to the For statement node of VRIR and the Parfor statement to the parallel For in VRIR. The McSAF IR does not have a separate Parfor node. Instead the For statement node contains a boolean flag which when set to true implies that the node is a Parfor statement. The flag when set to false implies that the node is a for statement. 
 
-The for statement node in VRIR 3 children. The \textsf{body} node represents the list of statements that make up the loop body. \textsf{Itervars} is an array of the symbol table ids of the iteration variables of the loops. In case of \matlab, there are only be one iteration variable. The \textsf{loopdomain} contains a domain expression which in turn defines the bounds of the loop. Table \ref{tab:forGen} gives an example of the for statement in \matlab and the equivalent VRIR \textsf{for} statement node. The iteration variable is \textsf{k} and the loops bounds are \textsf{n-1} to \textsf{1}. The step value is \textsf{-1}.
+The For statement node in VRIR 3 children. The \textsf{body} node represents the list of statements that make up the loop body. \textsf{Itervars} is an array of the symbol table ids of the iteration variables of the loops. In case of \matlab, there are only be one iteration variable. The \textsf{loopdomain} contains a domain expression which in turn defines the bounds of the loop. Table \ref{tab:forGen} gives an example of the for statement in \matlab and the equivalent VRIR \textsf{for} statement node. The iteration variable is \textsf{k} and the loops bounds are \textsf{n-1} to \textsf{1}. The step value is \textsf{-1}.
 \begin{table}[htbp]
 \centering
 \begin{tabular}{|l|l|}
@@ -383,8 +410,9 @@ end;
 \end{table}
 
 The parallel for statement node in VRIR also contains the three child nodes mentioned above. However, it also contains an additional node, \textsf{shared}. The \textsf{shared} node contains a list of symbol table ids of the variables that are shared across loop iterations. 
+
 \subsection{Return Statement}
-The return statement in \matlab is mapped to the return statement node in VRIR. However, the return statement in \matlab and therefore the return statement node in McSAF IR, does not specify the variables to be returned. This is because the function node of McSAF IR contains the information about the output parameters. However, the function node in VRIR does not have a child node for the output parameters. Hence to allow the VRIR backend to determine the variables that need to be returned, weexplictly add the output parameters specified by the McSAF IR function node to the return statement node of VRIR. Table \ref{tab:returnGen} gives an example of the return statement. The \matlab function has a single output parameter \textsf{z\_hat}. However, the return specify the fact that \textsf{z\_hat} is a return parameter. Hence it has to explicitly added, as we can observe in the VRIR code in the second column. 
+The return statement in \matlab is mapped to the return statement node in VRIR. However, the return statement in \matlab and therefore the return statement node in McSAF IR, does not specify the variables to be returned. This is because the function node of McSAF IR contains the information about the output parameters. But the function node in VRIR does not have a child node for the output parameters. Hence to allow the VRIR backend to determine the variables that need to be returned, we explicitly add the output parameters specified by the McSAF IR function node to the return statement node of VRIR. Table \ref{tab:returnGen} gives an example of the return statement. The \matlab function has a single output parameter \textsf{z\_hat}. However, the return specify the fact that \textsf{z\_hat} is a return parameter. Hence it has to explicitly added, as we can observe in the VRIR code in the second column. 
 \begin{table}[htbp]
 \centering
 \begin{tabular}{|l|l|}
@@ -421,8 +449,24 @@ end
 \end{table}
 
 In \matlab, a function need not have an explicit return statement. All the output parameters are returned to the caller once the end of the function is reached. However, for reasons mentioned above, we need a return statement in VRIR. Hence a return statement is explictly added along with the output parameters. 
+
+In some cases the return statement may not be accessible through all paths. For example, if a return statement is present inside a \textsf{if} block, the return statement will be executed only if the \textsf{if} condition is true. In such cases, we add the output parameters to the existing return statement and also add a return statement at the end of the function body. 
+
+Table \ref{tab:retList} gives a list of possible cases for the return statement in a \matlab function and the actions that are taken for each case. 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+Status of Return statement in \matlab                                                               & Action taken                                                                                                                                                                                      \\ \hhline{|=|=|}
+No Return statement present.                                                                       & \begin{tabular}[c]{@{}c@{}}Statement explicitly added at \\ the end of the function body\\ along with return variables.\end{tabular}                                                              \\ \hline
+\begin{tabular}[c]{@{}c@{}}Return statement present. Not accessible \\ from all paths\end{tabular} & \begin{tabular}[c]{@{}c@{}}Statement explicitly added at \\ the end of the function body \\ along with return variables\\ Return variables added to \\ existing return statement.\end{tabular} \\ \hline
+\begin{tabular}[c]{@{}c@{}}Return statement present. Accessible from\\ all paths\end{tabular}      & \begin{tabular}[c]{@{}c@{}}Return variables added to\\ existing return statement.\end{tabular}                                                                                                    \\ \hline
+\end{tabular}
+\caption[List of cases for return statements in \matlab]{The table gives a list of possible cases for the presence of the return statement in a \matlab function and the subsequent actions taken for each case. }
+\label{tab:retList}
+\end{table}
 \subsection{If Statement}
-The if statement in \matlab is compiled to the if statement node in VRIR. The if statement in VRIR has three child nodes. The test expression contains the if condition, the if child contains the list of statements inside the if block and the else child contains the list of statement inside the else block. Table \ref{tab:ifGen} gives an example of the if statement. 
+The If statement in \matlab is compiled to the If statement node in VRIR. The If statement in VRIR has three child nodes. The test expression contains the If condition, the If child contains the list of statements inside the If block and the else child contains the list of statement inside the else block. Table \ref{tab:ifGen} gives an example of the If statement. 
 \begin{table}[htbp]
 \centering
 \begin{tabular}{|l|l|}
@@ -462,7 +506,7 @@ The if statement in \matlab is compiled to the if statement node in VRIR. The if
 \label{tab:ifGen}
 \end{table}
 \subsection{While Statement}
-Similar to the if statement, the while statement in \matlab is mapped to the while statement node in VRIR. The while statement node in VRIR contains two child nodes. A test node while holds the while condition and the body node which holds the statements of the loop body. 
+Similar to the If statement, the While statement in \matlab is mapped to the While statement node in VRIR. The While statement node in VRIR contains two child nodes. A test node while holds the While condition and the body node which holds the statements of the loop body. 
 \begin{table}[htbp]
 \centering
 \begin{tabular}{|l|l|}
@@ -498,22 +542,6 @@ Similar to the if statement, the while statement in \matlab is mapped to the whi
 \end{table}
 \subsection{Break and Continue statements}
 The break and continue statements in \matlab are compiled to the break continue statement nodes in VRIR respectively. 
-\section{Ranges} 
-\label{sec:range}
-Ranges are used to define a range of values. In VRIR, a range node has three expressions, start, stop and step. The range node represents a range from the start expressions value to the stop expression value with intervals of the step expression value.Whether the stop expression value is included in the range is determined using the exclude attribute. If the exclude attribute is set to \textsf{\%1} the stop expression value is excluded and the stop expression value is included when the exclude attribute is set to \textsf{\%0}. In case of \matlab, since the stop expression value  is always included, the exclude attribute is always set to \textsf{\%0}. The step expression value is optional and defaults to 1 if not specified. Ranges are used for two reasons, one to represent loop bounds and other to represent an array slice in an index operation. Listing \ref{lst:rangeGen} gives an example of a range node in VRIR. The exclude flag is set to \textsf{\%0} and hence the stop expression value will be included. 
-\begin{lstlisting}[float,language=matlab, label={lst:rangeGen}, caption={Example of a Range in VRIR}]
-(range :exclude %0
-	(start
-		<Start Expression>
-	)
-	(step
-		<Step Expression>		
-    )
-	(stop
-		<Stop Expression>
-	)
-)
-\end{lstlisting}
 \section{Mapping Expressions}
 Similar to statements, many expressions in \matlab have equivalent expression nodes in VRIR. However, every expression node has a type associated with it. This is not the case with the McSAF IR. Hence the type of each expression is required to be calculated during code generation. 
 \subsection{Name Expressions}
@@ -533,12 +561,19 @@ A
 &
 {
 \begin{lstlisting}[language=lisp,frame=none, numbers=none]
+;; Generated Name expression
+
 (name :id 10)
+
+;; Entry in symbol table.
+(sym :id 10 :name A 
+	(float64 :ctype 0)
+)
 \end{lstlisting}
 } \\
 \hline
 \end{tabular}
-\caption[Name Expression example for \matlab]{The table shows an example of the generated name expression node for a variable A in \matlab. }
+\caption[Name Expression example for \matlab]{The table shows an example of the generated name expression node for a variable A in \matlab. The entry of the variable in the symbol table is also shown. }
 \label{tab:nameGen}
 \end{table}
 \subsection{Paramaterized Expressions}
@@ -849,10 +884,25 @@ Literal expressions are expressions in \matlab holding constant value. There are
 \caption[Example of a Fp literal in \matlab with the equivalent VRIR code]{the table gives an example of a Fp literal expression in \matlab and the equivalent VRIR constant expression that is generated.}
 \label{tab:constGen}
 \end{table}
-
+\subsection{Range Expressions} 
+\label{subsec:range}
+Range expressions are used to define a range of values. They hold three expressions, start, stop and step. The start expression refers to the start of the range, the stop to the end of the range and the step refers to the interval between two consecutive values. A range expression is compiled to a range node in VRIR. A range node also has three expressions, start, stop and step. The range node represents a range from the start expressions value to the stop expression value with intervals of the step expression value. Whether the stop expression value is included in the range is determined using the exclude attribute. If the exclude attribute is set to \textsf{\%1} the stop expression value is excluded and the stop expression value is included when the exclude attribute is set to \textsf{\%0}. In case of \matlab, since the stop expression value  is always included, the exclude attribute is always set to \textsf{\%0}. The step expression value is optional and defaults to 1 if not specified. Ranges are used for two reasons, one to represent loop bounds and other to represent an array slice in an index operation. Listing \ref{lst:rangeGen} gives an example of a range node in VRIR. The exclude flag is set to \textsf{\%0} and hence the stop expression value will be included. 
+\begin{lstlisting}[float,language=matlab, label={lst:rangeGen}, caption={Example of a Range in VRIR}]
+(range :exclude %0
+	(start
+		<Start Expression>
+	)
+	(step
+		<Step Expression>		
+    )
+	(stop
+		<Stop Expression>
+	)
+)
+\end{lstlisting}
 \subsection{Domain Expressions}
 \label{subsec:domainExpr}
-Domain expressions are used in \textsf{for} statements to specify the loop bounds. Domain expressions can support multiple loop bounds, one for each iteration variable. However \matlab only allows a single iteration variable for a loop and hence only one set of loop bounds exist inside a domain expression for \matlab. The VType of the domain expression is the domain type which holds the VTypes of all the iteration variables of the loop. The loop bounds are represented by ranges described in Section \ref{sec:range}. 
+Domain expressions are used in \textsf{for} statements to specify the loop bounds. Domain expressions can support multiple loop bounds, one for each iteration variable. However \matlab only allows a single iteration variable for a loop and hence only one set of loop bounds exist inside a domain expression for \matlab. The VType of the domain expression is the domain type which holds the VTypes of all the iteration variables of the loop. The loop bounds are represented by ranges described in Subsection \ref{subsec:range}. 
 
 Table \ref{tab:domainGen} gives an example of the domain expression that is generated as part of the for statement in VRIR. The Domain expression has a domain type and a single range for the iteration variable. The range starts from 1 and stops at \textsf{na}. Since the exclude attribute is not set, the stop value is included in the range.
 \begin{table}[htbp]

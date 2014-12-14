@@ -50,7 +50,7 @@ quadrature & Burkardt and Cliff   &  \begin{tabular}{@{} c@{}} Simulates the qua
 \label{tab:matBench}
 \end{table}
 \subsection{Python Benchmarks}
-Many of the Python benchmarks are Python ports of the Ostrich benchmark suite\cite{Khan:2014:UJW:2661088.2661090}. The benchmarks contain scalar operations as well as array index operation. Six of the nine Python benchmarks support parallelism. Table \ref{tab:pyBenches} gives the list of Python benchmarks that were used.  
+Many of the Python benchmarks are Python ports of the Ostrich benchmark suite\cite{Khan:2014:UJW:2661088.2661090}. The benchmarks contain scalar operations as well as array index operation. Six of the nine Python benchmarks support parallelism. Table \ref{tab:pyBenches} gives the list of Python benchmarks that were used. The Python ports of the Ostrich benchmark suite are known as PyDwarfs. The rest of the benchmarks are part of a suite known as PyBenches. 
 \begin{table}[htbp]
 \centering
 \begin{tabular}{|c|c|c|}
@@ -97,7 +97,7 @@ VeloCty all optimisations                                                    & \
 
 \section{\matlab Results}
 \subsection{Overall Results}
-We ran experiments on 17 \matlab benchmarks. We compared the VeloCty with all optimisations enabled  with the Mathworks' \matlab implementation and \matlab-coder. We measured the speedup of the VeloCty backend and the \matlab-coder versions compared to  Mathwork's \matlab JIT compiler. Figure \ref{fig:results_cwochecks} shows a bar graph with the results of the experiment. The red bars show the speedup of \matlab-coder and the blue bars show the speedup of the VeloCty backend with all optimisations enabled. The geometric mean for the speedup of the VeloCty version was 8.05 as compared to the geometric mean of 3.89 for the \matlab-coder version. The largest speedup was shown by the quadrature benchmark. The benchmark was 458 times faster than Mathworks' \matlab. The benchmark consists of operations on scalar operations and hence gives a high speedup. The smallest speedup of 1.31, is given by the closure benchmark. The benchmark's computationally intensive code section is a while loop containing a matrix multiplication operation. All three versions, the VeloCty backend, Mathwork's \matlab and \matlab-coder use the Intel MKL BLAS library and hence show similiar performance. 
+We ran experiments on 17 \matlab benchmarks. We compared the VeloCty with all optimisations enabled  with the Mathworks' \matlab implementation and \matlab-coder. We measured the speedup of the VeloCty backend and the \matlab-coder versions compared to Mathwork's \matlab JIT compiler. Figure \ref{fig:results_cwochecks} shows a bar graph with the results of the experiment. The red bars show the speedup of \matlab-coder and the blue bars show the speedup of the VeloCty backend with all optimisations enabled. The geometric mean for the speedup of the VeloCty version was 8.05 as compared to the geometric mean of 3.89 for the \matlab-coder version. The largest speedup was shown by the quadrature benchmark. The benchmark was 458 times faster than Mathworks' \matlab. The benchmark consists of operations on scalar operations and hence gives a high speedup. The smallest speedup of 1.31, is given by the closure benchmark. The benchmark's computationally intensive code section is a while loop containing a matrix multiplication operation. All three versions, the VeloCty backend, Mathwork's \matlab and \matlab-coder use the Intel MKL BLAS library and hence show similiar performance. 
 
 \begin{figure}[htbp]
 \centering
@@ -206,12 +206,12 @@ Geometric mean & 1.23                        \\ \hline
 Three of the \matlab benchmarks, nb1d, matmul and mbrt can be executed in parallel. We calculated the speedups of the three benchmarks in parallel compared to the baseline VeloCty version. Table \ref{tab:cpvscwo} gives the speedups for the three benchmarks. The matmul and mbrt benchmarks show significant speedups. This is because in the case of the the two benchmarks, a very small portion of the code needs to be executed sequentially. Moreover, parallel portion of the code is computationally intensive thus making the thread management time a small portion of the total execution time. On the other hand, the nb1d benchmark shows no speedup. This can be attributed to the fact that the loop being parallelised is nested inside another loop executing sequentially. Moreover, the loop being executed in parallel in not computationally intensive and hence the benchmark does not benefit from parallel execution. 
 \begin{table}[htbp]
 \centering
-\begin{tabular}{|c|c|}
+\begin{tabular}{|c|c|c|}
 \hline
-Benchmark & Speedup \\ \hhline{|=|=|}
-matmul    & 3.87    \\ \hline
-mbrt      & 3.26    \\ \hline
-nb1d      & 1.01    \\ \hline
+Benchmarks & \begin{tabular}[c]{@{}c@{}}Speedup Velocty parallel\\ v/s VeloCty Baseline\end{tabular} & \begin{tabular}[c]{@{}c@{}}Speedup Matlab Parallel\\ v/s Matlab Sequential\end{tabular} \\ \hline
+matmul     & 3.87                                                                                    & 1.05                                                                                    \\ \hline
+mbrt       & 3.26                                                                                    & 3.35                                                                                    \\ \hline
+nb1d       & 1.01                                                                                    & 0.32                                                                                    \\ \hline
 \end{tabular}
 \caption[Speedup of Generated Code with Parallel constructs]{The table lists the speedups of the benchmarks in VeloCty code with parallel execution over baseline VeloCty code.}
 \label{tab:cpvscwo}

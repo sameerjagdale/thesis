@@ -1,4 +1,40 @@
 \begin{otherlanguage}{french} 
-résumé
+Les langages scientifiques de haut niveau, tels que MATLAB et Python                                
+et sa librairie NumPy, gagnent en popularité auprès des scientifiques                               
+et des mathématiciens.  Ces langages offrent des fonctionalités telles                              
+que le typage dynamique et des fonctions scientifiques de haut niveau                               
+qui permettent un prototypage facile.  Par contre, ces fonctionalités                               
+diminue la performance en exécution du code.  
+
+Nous présentons VeloCty,                              
+un compilateur statique optimisant pour MATLAB et Python comme                                      
+solution au problème d'améliorer la performances des programmes écrits                              
+dans ces langages.  Pour la majorité des programmes, une grande                                     
+proportion du temps d'exécution est passée à exécuter une petite                                    
+section du code.  De plus, ces sections peuvent souvent être compilées                              
+avant l'exécution du code et on peut obtenir une amélioration en                                    
+performance en optimisant seulement ces sections chaudes.  VeloCty                                  
+prend en entrée des fonctions écrites en MATLAB et Python spécifiées                                
+par l'utilisateur et génère une version équivalente en C++.  VeloCty                                
+génère également le code d'interfaçage pour l'intégration avec MATLAB                               
+et Python.  Le code généré peut ainsi être compilé comme une                                        
+bibliothèque partagée qui peut être liée avec n'importe quel programme                              
+écrit en MATLAB et Python.  Nous implémentons aussi des optimisations                               
+pour éliminer les tests de bornes des tableaux, pour réutiliser de la                               
+mémoire déjà allouée dans les opérations sur les tableaux, et pour                                  
+supporter l'exécution parallèle via OpenMP.                                                         
+                                                                                                    
+VeloCty utilise le système de compilation Velociraptor.  Nous                                       
+implémentons un générateur de code qui transforme la représentation                                 
+intermédiaire de Velociraptor, VRIR, en C++ ainsi que des supports                                  
+d'exécution spécifiques pour MATLAB et Python.  Nous avons également                                
+implémenté un générateur de code MATLAB à VRIR à l'aide de McLab.                                   
+                                                                                                    
+VeloCty a été évalué avec des programmes de test de performance, 17 écrits en MATLAB et 9 écrits en Python.                              
+Les résultats de VeloCty en utilisant toutes nos optimisations sur les                              
+tests en MATLAB montrent qu'il est 1.3 à 458 fois plus rapide que                                   
+l'interpréteur et le compilateur en-ligne de MATLAB 2014b par                                       
+MathWorks.  Pour les tests en Python, VeloCty est 44.11 à 1681 fois                                 
+plus rapide que l'interpréteur CPython. 
 \end{otherlanguage}
 

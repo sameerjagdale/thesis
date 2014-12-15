@@ -26,7 +26,7 @@ dich       & Falcon project       & Dirichlet solution to Laplace's equation\\
 \hline
 fiff       & Falcon project       & Computes the finite difference solution to the wave equation \\
 \hline
-ldgr       &                      & Calculates derivatives of Legendre polynomials \\
+ldgr       &  -                    & Calculates derivatives of Legendre polynomials \\
 \hline
 mbrt       & McFor project        & Computes Mandelbrot sets \\
 \hline
@@ -50,25 +50,25 @@ quadrature & Burkardt and Cliff   &  \begin{tabular}{@{} c@{}} Simulates the qua
 \label{tab:matBench}
 \end{table}
 \subsection{Python Benchmarks}
-Many of the Python benchmarks are Python ports of the Ostrich benchmark suite\cite{Khan:2014:UJW:2661088.2661090}. The benchmarks contain scalar operations as well as array index operation. Six of the nine Python benchmarks support parallelism. Table \ref{tab:pyBenches} gives the list of Python benchmarks that were used. The Python ports of the Ostrich benchmark suite are known as PyDwarfs. The rest of the benchmarks are part of a suite known as PyBenches. 
+Many of the Python benchmarks are Python ports of the Ostrich benchmark suite\cite{Khan:2014:UJW:2661088.2661090}. The benchmarks contain scalar operations as well as array index operation. Six of the nine Python benchmarks support parallelism. Table \ref{tab:pyBenches} gives the list of Python benchmarks that were used. The Python ports of the Ostrich benchmark suite are known as PyDwarfs. The rest of the benchmarks are part of a suite that were put together by the open-source Python community focused on compilers. The suite is known as NumFocus and can be found  on github\footnote{\url{https://github.com/numfocus/python-benchmarks}}. 
 \begin{table}[htbp]
 \centering
-\begin{tabular}{|c|c|c|}
+\begin{tabular}{|c|l|c|}
 \hline
 Benchmark Name & Source    & Description                                                                                                                                              \\ 
 \hhline{|=|=|=|}
-arc\_distance  & PyBenches & \begin{tabular}[c]{@{}c@{}} Calculates the pairwise arc distance \\ between all points in vector a and b.\end{tabular} \\ \hline                                                                                                                                                   
+arc\_distance  & NumFocus & \begin{tabular}[c]{@{}c@{}} Calculates the pairwise arc distance \\ between all points in vector a and b.\end{tabular} \\ \hline                                                                                                                                                   
 fft            & Pydwarfs  & Fast Fourier Transform                                                                                                                                   \\ \hline
-growcut        & PyBenches &  Implementation of GrowCut segmentation                                                                                                                                                         \\ \hline
-julia          & PyBenches &                                                                                                                                                          \\ \hline
+growcut        & NumFocus &  Implementation of GrowCut segmentation                                                                                                                                                         \\ \hline
+julia          & NumFocus &  Calculates the Julia fractal                                                                                                                                                        \\ \hline
 lud            & PyDwarfs  & \begin{tabular}[c]{@{}c@{}}LU decomposition  factors a matrix as the product of a \\ lower triangular matrix and an upper triangular matrix\end{tabular} \\ \hline
 pagerank       & PyDwarfs  & PageRank is a link analysis algorithm used by Google Search                                                                                              \\ \hline
-pairwise       & PyBenches &                                                                                                                                                          \\ \hline
+pairwise       & NumFocus &   \begin{tabular}[c]{@{}c@{}} Computes the pairwise distance \\ between a set of points in 3D space.\end{tabular}                                                                                                                                                         \\ \hline
 spmv           & PyDwarfs  & Sparse Matrix-Vector Multiplication                                                                                                                      \\ \hline
 srad           & PyDwarfs  & \begin{tabular}[c]{@{}c@{}}Tracks the movement of a mouse heart over a sequence  of 104\\ 609x590 ultrasound images to record response to the stimulus \end{tabular} 
 \\ \hline
 \end{tabular}
-\caption{List of Python Benchmarks used for experiments}
+\caption[List of Python Benchmarks used for experiments]{List of Python Benchmarks used for experiments}
 \label{tab:pyBenches}
 \end{table}
 
@@ -108,7 +108,7 @@ We ran experiments on 17 \matlab benchmarks. We compared the VeloCty with all op
 \label{fig:results_cwochecks}
 \end{figure}
 
-For most benchmarks, our VeloCty backend was faster than \matlab-coder. The benchmarks, \textsf{bbai}, \textsf{lgdr}, \textsf{nb1d}, \textsf{fft} and \textsf{numprime} are exceptions. \textsf{Lgdr} \textsf{bbai} and \textsf{nb1d} contain array slicing and array operations which do not internally make calls to the BLAS library and hence take longer to execute compared to \matlab-coder. The \textsf{fft} benchmark contains a loop whose direction can not be identified at run time and hence a loop vector needs to be initialised and iterated over as described in Subsection \ref{subsec:forStmt}. \textsf{numprime} contains scalar operations and a square root function call. The square root function's \matlab implementation may be faster than the stsndard C++ implementation and hence the \textsf{numprime} benchmark performs in \matlab-coder than in the \velocty version. 
+For most benchmarks, our VeloCty backend was faster than \matlab-coder. The benchmarks, \textsf{bbai}, \textsf{lgdr}, \textsf{nb1d}, \textsf{fft} and \textsf{numprime} are exceptions. \textsf{Lgdr} \textsf{bbai} and \textsf{nb1d} contain array slicing and array operations which do not internally make calls to the BLAS library and hence take longer to execute compared to \matlab-coder. The \textsf{fft} benchmark contains a loop whose direction can not be identified at run time and hence a loop vector needs to be initialised and iterated over as described in Subsection \ref{subsec:forStmt}. \textsf{numprime} contains scalar operations and a square root function call. The square root function's \matlab implementation may be faster than the standard C++ implementation and hence the \textsf{numprime} benchmark performs in \matlab-coder than in the \velocty version. 
 
 As we can also observe, \matlab-coder shows a positive speedup on all benchmarks except for \textsf{mcpi}. The reason for this is that the benchmark contains a loop with calls to the random function inside the body. These functions return a single scalar value. However, in case of \matlab-coder, an 1x1 matrix is returned. Since a heap allocation is needed for every iteration, the benchmark is significantly slower than Mathworks' \matlab. 
 
@@ -229,7 +229,7 @@ Figure \ref{fig:results_final} shows a chart with the speedups of the diferent v
 \begin{figure}[htbp]
 \centering
 \includegraphics[scale=0.45]{Figures/final_mat.png}
-\caption{The figure compares the speedups of different \velocty versions against the Mathworks' interpreter and JIT compiler version for the \matlab benchmarks.}
+\caption[Summary of \matlab benchmark results]{The figure compares the speedups of different \velocty versions against the Mathworks' interpreter and JIT compiler version for the \matlab benchmarks. Geometric mean(parallel) gives the geometric mean of three benchmarks matmul, mbrt and nb1d when they are executed with all optimisations.}
 \label{fig:results_mat}
 \end{figure}
 
@@ -318,7 +318,7 @@ Figure \ref{fig:results_final} shows a chart with the speedups of the diferent v
 \begin{figure}[htbp]
 \centering
 \includegraphics[scale=0.5]{Figures/final_py.png}
-\caption[Summary of Python Results]{The bar graph gives the speedups of the \velocty backend for diferent \velocty versions compared to the Mathworks' JIT and VM implemenation. Higher is better }
+\caption[Summary of Python Results]{The bar graph gives the speedups of the \velocty backend for diferent \velocty versions compared to the Mathworks' JIT and VM implemenation. Higher is better. Geometric mean(parallel) gives the speedups of the 6 benchmarks that can be executed in parallel. }
 \label{fig:results_final}
 \end{figure}
 

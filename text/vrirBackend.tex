@@ -143,7 +143,7 @@ VrArrayCF32 & BlasComplexSingle \\ \hline
 VrArrayI64  & BlasLong          \\ \hline
 VrArrayI32  & BlasInt           \\ \hline
 \end{tabular}
-\caption{The table gives a list of VrArrays and the respective names of classes implementing array operations}
+\caption[List of VrArrays and respective classes]{The table gives a list of VrArrays and the respective names of classes implementing array operations}
 \label{tab:vrArrayToBlasClass}
 \end{table}
 Table \ref{tab:blasMethods} gives a list of array operations implemented by the runtime library.
@@ -162,7 +162,7 @@ scal\_add   & Scalar-Array Addition        & -         & Yes                 \\ 
 scal\_minus & Scalar-Array Subtraction     & -         & Yes                 \\ \hline
 transpose   & Matrix Transpose             & -         & Yes                 \\ \hline
 \end{tabular}
-\caption{The table gives a list of array operations that are implemented by the runtime library.}
+\caption[List of array operations]{The table gives a list of array operations that are implemented by the runtime library.}
 \label{tab:blasMethods}
 \end{table} 
 
@@ -189,7 +189,7 @@ Name                                         & S-Expression                     
 \multicolumn{1}{|c|}{\multirow{2}{*}{Bool}} & \multirow{2}{*}{( bool )}                        & REAL                         & bool                     \\ \cline{3-4} 
 \multicolumn{1}{|c|}{}                       &                                                   & \multicolumn{1}{c|}{COMPLEX} & Not Supported                          \\ \hline
 \end{tabular}
-\caption[VType to C++ type mapping]{VType to C++ type mapping. The tables shows the different C++ will be mapped to from the VTypes.} 
+\caption[VTypes and respective C++ types]{VType to C++ type mapping. The tables shows the different C++ will be mapped to from the VTypes.} 
 \label{tab:typeMap}
 \end{table}
 \subsection{Array Types}
@@ -234,7 +234,7 @@ The return type of the function is determined using the outtype node inside the 
 	(body ... )
 \end{tabular} & \begin{tabular}[c]{@{}l@{}}VrArrayPtrF64 \\ babai (VrArrayPtrF64 R \\,VrArrayPtrF64 y)\end{tabular} \\ \hline
 \end{tabular}
-\caption[funcTypeMap]{The table shows an example func type and the equivalent function signature that was generated using the func type.}
+\caption[Function type]{The table shows an example func type and the equivalent function signature that was generated using the func type.}
 \label{tab:funcTypeMap}
 \end{table}
 

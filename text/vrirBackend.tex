@@ -1119,7 +1119,7 @@ vr_temp9 = VR_GET_DATA_F64(c)
 \label{tab:basicIndex}
 \end{table}
 \subsubsection{ Generating a single index value from multiple indices}
-Generating a single index value is dependent on the array layout. We support both row and column major array layouts and hence support generating single index value generation for both. In case of a row major layout, the last value is contiguous and hence single index value is given by,
+Generating a single index value is dependent on the array layout. We support both row and column major array layouts and hence support generating single index value generation for both. In case of a row major layout, the last value is contiguous and hence single index value is given by\footnote{Source:\url{http://en.wikipedia.org/wiki/Row-major_order}},
 \begin{equation}
 n_d + N_d \cdot (n_{d-1} + N_{d-1} \cdot (n_{d-2} + N_{d-2} \cdot (\cdots + N_2 n_1)\cdots)))
 = \sum_{k=1}^d \left( \prod_{\ell=k+1}^d N_\ell \right) n_k \\

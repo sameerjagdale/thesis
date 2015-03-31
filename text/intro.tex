@@ -1,7 +1,7 @@
 With the advent of multicore processors, there has been a renewed interest in the development of performance tools and algorithms targeted for parallel architectures. Many research areas  provide a wide variety of problems which would show improved performance when executed in parallel. One such area is scientific and numerical computing. Scientific algorithms are used by researchers from various fields such as chemistry, biology, geography etc. as well as different sub-fields of computer science like machine learning. In most cases, these algorithms are written in languages  that are collectively known as  array-based languages. A few examples of such languages are \matlab\cite{matlab}, Julia\cite{julia} and Python\cite{python} with it's NumPy\cite{numpy} library. 
 
-Array-based languages offer features like, an interpreter style read-eval-print-eval, functions such as eval and feval for dynamic code evaluation, no types etc. which enable rapid prototyping. However due to the very same features, these languages show poorer performance when compared to statically compiled languages. A common approach for improving the performance is compile whole programs to languages such as {\sc FORTRAN}\cite{fortran} and C\cite{clang}. 
-However, in most cases, the most computationally intensive portion of the program is small, often localised inside a loop body. Hence compiling the entire program is not necessary. In most cases speed up observed through partial compilation of hot code sections is commensurate with that observed by compiling the whole program. This allows the user to continue programming in the language he/she is more comfortable in.
+Array-based languages offer features like, an interpreter style read-eval-print-loop, functions such as eval and feval for dynamic code evaluation, no types etc. which enable rapid prototyping. However due to the very same features, these languages show poorer performance when compared to statically compiled languages. A common approach for improving the performance is compile whole programs to languages such as {\sc FORTRAN}\cite{fortran} and C\cite{clang}. 
+However, in most cases, the most computationally intensive portion of the program is small, often localised inside a loop body. Hence compiling the entire program is not necessary. In most cases speed up observed through partial compilation of hot code sections is commensurate with that observed by compiling the whole program. This allows the user to continue programming in the language he/she is more comfortable in. Additionally, these functions may be reusable for other programs. In such cases, the functions will have to be compiled only once and can be reused for the other programs. 
 
 This thesis addresses the problem of improving the performance of programs written in array-based languages by compiling the hot sections to parallel C++\cite{cpp}. We support both \matlab and NumPy. There are two main challenges. First one is supporting the different and often complementary semantics of both languages. The other is supporting the large number of builtins methods that are supported by both languages.
 Our solution implement a static C++ backend for Velociraptor\cite{velociraptor} toolkit and use tools to compile \matlab and Python programs to the Velociraptor intermediate representation, VRIR. The \mclab\cite{casey:mclab} static pipeline is used for \matlab and PyVrir, a Python frontend for Velociraptor is used for Python. 
@@ -21,7 +21,7 @@ The compilation pipeline for \velocty can be seen in \figref{Fig:Overview}. As m
 The VRIR is then parsed by the Velociraptor frontend and converted into an AST representation. Various passes such as the simplification pass, loop info collector and the index info collector pass are performed over the AST and is then passed to the static code generator. Finally, the code generator outputs C++ code which can then be compiled to a shared library along with the language specific run time library containing helper functions and the glue code. 
 \section{The Execution Model} 
 \label{sec:execModel}
-The Execution model, shown in \figref{Fig:working}, describes how program execution occurs before and after statically compiling some of the methods in the program to C++ using \velocty. The user selects a function which he/she identifies as computationally intensive. \velocty generates a callgraph using the user-specified function as an entry point. In \figref{Fig:working} the coreFunction1 is specified as the entry point and the  generated callgraph contains coreFunction1 and coreFunction2. Both these functions are compiled by \velocty to C++.
+The Execution model, shown in \figref{Fig:working}, describes how program execution occurs before and after statically compiling some of the methods in the program to C++ using \velocty. The user selects a function which he/she identifies as computationally intensive. \velocty generates a callgraph using the user-specified function as an entry point. In \figref{Fig:working} the core1 function is specified as the entry point. The compiler then generates a callgraph. In the current example, the callgraph contains core1 and core2. All functions in callgraph are then compiled to C++ by \velocty. The figure shows the implementation of the core1 function. The function contains a double array \textsf{a} and returns another double array \textsf{x}. The array \textsf{x} is initialised inside the function using the builtin function \textsf{zeros}. The function also contains a for loop which iterates from 1 to 10. On each iteration, the i$^{th}$ element of \textsf{x} is assigned the result of the sum of the i$^{th}$ element of \textsf{a} and a constant value 10 and a call is made to the \textsf{core2} function. 
 \begin{figure}[htbp]
 \begin{center}
 \includegraphics[scale=0.4]{Figures/WorkingDetails.png}
@@ -29,11 +29,11 @@ The Execution model, shown in \figref{Fig:working}, describes how program execut
 \end{center}
 \end{figure}
 
-The generated C++ code contains calls to functions in a language-specific library. The library contains functions which mirror the builtins in the source language. These functions are also written in C++ but are language-specific because the behaviour of the functions are dependent on the source language.
+The generated C++ code contains calls to functions in a language-specific library. The library contains functions which mirror the builtins in the source language. These functions are also written in C++ but are language-specific because the behaviour of the functions are dependent on the source language. In this case, the \textsf{zeros} function is implemented in the runtime library and the generated code contains a call to this function in the runtime library. 
 
 \velocty also generates glue code to interface with the source program. The MEX API and the Python/C\cite{pyc} API are used for interfacing with \matlab and Python respectively. 
 
-The generated code is compiled with the runtime and the glue code and packaged as a shared library. All calls to the entry point function, in this case, coreFunction1, would be directed to the shared library instead of the original source language version.\\
+The generated code is compiled with the runtime and the glue code and packaged as a shared library. All calls to the entry point function, in this case, core1, would be directed to the shared library instead of the original source language version.\\
 \section{Contributions}
 The main contributions of this thesis are as follows.
 \begin{itemize}
@@ -42,14 +42,13 @@ The main contributions of this thesis are as follows.
 \item Implementation of a transformation from  Colon expressions to Range expressions
 \item Generating glue code necessary for invoking C++ functions from \matlab.
 \item Generating C++ code from the Velociraptor IR.
-\item Optimizing generated code by elminating bounds checks removing unncessary memory allocations and parallel code execution.
+\item Optimizing generated code by eliminating bounds checks removing unnecessary memory allocations and parallel code execution.
 \end{itemize}
 \section{Thesis Outline}
 This thesis is divided into \ref{chap:Conclusions} chapters, including this one, which are structured as follows.
 \chapref{chap:Background} gives a brief overview of the tools
 used by VeloCty.
-\chapref{chap:McSAFTranslate} describes the translation from the McSAF.
-intermediate representation to the Velociraptor intermediate representation(VRIR).
+\chapref{chap:McSAFTranslate} describes the translation from the McSAF intermediate representation to the Velociraptor intermediate representation(VRIR).
 \chapref{chap:vrirBackend} talks about the generation of C++ code from VRIR.
 \chapref{chap:glueCode} describes the various aspects of generating glue code for \matlab's MEX API including how input data is converted from MEX data structures to VeloCty data structures. 
 \chapref{chap:codeOptimise} explains the code optimisations implemented to improve the performance. 

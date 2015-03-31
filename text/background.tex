@@ -55,7 +55,7 @@ Dimension collapsing functions in NumPy behave differently from those in \matlab
 \section{C APIs}
 We used the C APIs provided by \matlab and Python to interface the generated code with the source language. To interface with \matlab, we use the MEX\cite{mex} API and the Python/C\cite{pyc} API is used for Python. 
 \subsection{MEX}
-The Mathworks' MEX provides functions and data structures to allow interfacing code in \matlab with code in C/C++. In order to use these functions, the \textsf{mex.h} header file is required to be included. A compiler to  compile the C/C++ code is also provided. Data between the \matlab code and the C++ code is passed as pointers to MxArrays. The raw array data and meta data can be accessed through different MEX functions. MEX also provides functions to create and destroy MxArrays as well as other basic memory management functions. Table \ref{tab:mexFunc} gives a list of MEX functions that are used for interfacing with the source langauge. 
+The Mathworks' MEX provides functions and data structures to allow interfacing code in \matlab with code in C/C++. In order to use these functions, the \textsf{mex.h} header file is required to be included. A compiler to  compile the C/C++ code is also provided. Data between the \matlab code and the C++ code is passed as pointers to MxArrays. The raw array data and meta data can be accessed through different MEX functions. MEX also provides functions to create and destroy MxArrays as well as other basic memory management functions. Table \ref{tab:mexFunc} gives a list of MEX functions that are used for interfacing with the source language. 
 \begin{table}[h]
 \centering
 \begin{tabular}{|c|c|}
